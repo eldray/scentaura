@@ -1,4 +1,4 @@
 <h1>Pages, blog &amp; reviews</h1>
-<p><a href="/admin/content/pages">Pages &amp; policies</a> · <a href="/admin/content/faqs">FAQ</a> · <a href="/admin/content/blog">Blog</a> · <a href="/admin/content/reviews">Reviews</a></p>
+<nav class="tabs"><a href="/admin/content/pages" aria-current="page">Pages &amp; policies</a><a href="/admin/content/faqs">FAQ</a><a href="/admin/content/blog">Blog</a><a href="/admin/content/reviews">Reviews</a></nav>
 <div class="alert alert-info">Policy pages start as drafts with placeholders. Edit each one, then tick “I have reviewed and approve this page”. Do not launch until every page is approved. Have the privacy policy and terms checked by a lawyer.</div>
 <div class="box"><table class="table"><thead><tr><th>Page</th><th>Approved for launch</th><th>Last changed</th><th></th></tr></thead><tbody><% pages.forEach(p => { %><tr><td><%= p.title %></td><td><span class="pill <%= p.approved ? 'pill-ok' : 'pill-warn' %>"><%= p.approved ? 'Approved' : 'Draft – needs your review' %></span></td><td><%= p.updated_at %></td><td><a href="/admin/content/pages/<%= p.slug %>">Edit</a></td></tr><% }) %></tbody></table></div>

@@ -90,7 +90,7 @@ function createApp(db = dbm.get()) {
     res.flash = (type, msg) => { req.session.flash = { type, msg }; };
     res.admin = (view, locals = {}) => {
       const staff = req.staff;
-      app.render('admin/' + view, { ...res.locals, isAdmin: true, ...locals }, (err, body) => {
+      app.render('admin/' + view, { ...res.locals, isAdmin: true, staff, ROLE_LABELS: infra.ROLE_LABELS, ...locals }, (err, body) => {
         if (err) return next(err);
         res.render('admin/layout', { isAdmin: true, staff, can: p => infra.can(staff && staff.role, p), ROLE_LABELS: infra.ROLE_LABELS, pageTitle: locals.pageTitle || '', ...locals, body });
       });

@@ -67,7 +67,11 @@
   // Admin: mobile menu
   var ab = d.querySelector('[data-admin-menu]');
   var side = d.querySelector('.admin-side');
-  if (ab && side) ab.addEventListener('click', function () { side.classList.toggle('open'); });
+  if (ab && side) {
+    ab.addEventListener('click', function (e) { e.stopPropagation(); side.classList.toggle('open'); });
+    d.addEventListener('click', function (e) { if (side.classList.contains('open') && !side.contains(e.target)) side.classList.remove('open'); });
+    d.addEventListener('keydown', function (e) { if (e.key === 'Escape') side.classList.remove('open'); });
+  }
 
   // Admin: confirm dangerous buttons
   d.querySelectorAll('form[data-confirm]').forEach(function (f) {

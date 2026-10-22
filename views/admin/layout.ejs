@@ -9,15 +9,40 @@
 <% } else { %>
 <div class="admin-shell">
   <aside class="admin-side" id="admin-side">
-    <a class="brand-text" href="/admin"><%= S.business_name %></a>
-    <% const items = [['dashboard','/admin','Dashboard'],['orders','/admin/orders','Orders'],['deliveries','/admin/deliveries','Deliveries'],['products','/admin/products','Products'],['inventory','/admin/inventory','Inventory'],['suppliers','/admin/suppliers','Suppliers & purchases'],['customers','/admin/customers','Customers'],['promotions','/admin/promotions','Promotions'],['payments','/admin/payments','Payments'],['expenses','/admin/expenses','Expenses'],['reports','/admin/reports','Reports & profit'],['content','/admin/content/pages','Pages, blog & reviews'],['settings','/admin/settings','Settings'],['users','/admin/users','Staff & permissions']]; %>
-    <% items.forEach(i => { if (can(i[0])) { const here = i[1] === '/admin' ? currentPath === '/' || currentPath === '' : ('/admin' + currentPath).startsWith(i[1].replace('/pages','')); %><a href="<%= i[1] %>"<%- here ? ' aria-current="page"' : '' %>><%= i[2] %></a><% } }) %>
-    <hr>
-    <a href="/" target="_blank" rel="noopener">View shop ↗</a>
-    <a href="/admin/help">Help</a>
-    <a href="/admin/account">My account</a>
-    <div class="who"><%= staff.name %><br><%= ROLE_LABELS[staff.role] %></div>
-    <form method="post" action="/admin/logout"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-ghost btn-small" type="submit" style="margin:.4rem .7rem">Sign out</button></form>
+    <a class="side-brand" href="/admin"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M16 5h8v5h-8zM14 10h12v4H14zM11 14h18a3 3 0 0 1 3 3v15a3 3 0 0 1-3 3H11a3 3 0 0 1-3-3V17a3 3 0 0 1 3-3z"/></svg><span><%= S.business_name %><small>Admin</small></span></a>
+    <%
+    const I = {
+      dashboard: '<path d="M4 13h6V4H4zM14 20h6V11h-6zM4 20h6v-4H4zM14 7h6V4h-6z"/>',
+      orders: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
+      deliveries: '<path d="M2 6h12v10H2zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/>',
+      products: '<path d="M12 3l8 4v10l-8 4-8-4V7z"/><path d="M4 7l8 4 8-4M12 11v10"/>',
+      inventory: '<rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v10h14V9M10 13h4"/>',
+      suppliers: '<path d="M3 20h18M5 20V9l7-5 7 5v11"/><path d="M10 20v-6h4v6"/>',
+      customers: '<circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-3.500 3-6 7-6s7 2.500 7 6"/><path d="M16 4.500a3.500 3.500 0 0 1 0 7M18 14c2.500.7 4 2.800 4 6"/>',
+      promotions: '<path d="M3 12l9-9h8v8l-9 9z"/><circle cx="16" cy="8" r="1.200"/>',
+      payments: '<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18M7 15h4"/>',
+      expenses: '<path d="M12 3v18M16 7.500c0-1.700-1.800-2.500-4-2.500s-4 .8-4 2.500 1.800 2.300 4 2.500 4 .8 4 2.500-1.800 2.500-4 2.500-4-.8-4-2.500"/>',
+      reports: '<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>',
+      content: '<path d="M5 3h10l4 4v14H5z"/><path d="M14 3v5h5M8 13h8M8 17h8"/>',
+      settings: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.900 4.900l2.100 2.100M17 17l2.100 2.100M19.100 4.900L17 7M7 17l-2.100 2.100"/>',
+      users: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.400 3.600-7 8-7s8 2.600 8 7"/>'
+    };
+    const groups = [
+      ['Sell', [['dashboard','/admin','Dashboard'],['orders','/admin/orders','Orders'],['deliveries','/admin/deliveries','Deliveries'],['customers','/admin/customers','Customers'],['promotions','/admin/promotions','Promotions']]],
+      ['Stock', [['products','/admin/products','Products'],['inventory','/admin/inventory','Inventory'],['suppliers','/admin/suppliers','Suppliers & purchases']]],
+      ['Money', [['payments','/admin/payments','Payments'],['expenses','/admin/expenses','Expenses'],['reports','/admin/reports','Reports & profit']]],
+      ['Store', [['content','/admin/content/pages','Pages, blog & reviews'],['settings','/admin/settings','Settings'],['users','/admin/users','Staff & permissions']]]
+    ];
+    groups.forEach(g => { const shown = g[1].filter(i => can(i[0])); if (!shown.length) return; %>
+    <p class="side-group"><%= g[0] %></p>
+    <% shown.forEach(i => { const here = i[1] === '/admin' ? currentPath === '/' || currentPath === '' : ('/admin' + currentPath).startsWith(i[1].replace('/pages','')); %><a href="<%= i[1] %>"<%- here ? ' aria-current="page"' : '' %>><svg viewBox="0 0 24 24" aria-hidden="true"><%- I[i[0]] %></svg><%= i[2] %></a><% }) %>
+    <% }) %>
+    <p class="side-group">Shortcuts</p>
+    <a href="/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6"/></svg>View shop</a>
+    <a href="/admin/help"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.500 9.500a2.500 2.500 0 1 1 3.500 2.300c-.7.4-1 .9-1 1.700M12 17h.01"/></svg>Help</a>
+    <a href="/admin/account"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.400 3.600-7 8-7s8 2.600 8 7"/></svg>My account</a>
+    <div class="who-card"><span class="avatar"><%= (staff.name || '?').trim().charAt(0).toUpperCase() %></span><span><strong><%= staff.name %></strong><small><%= ROLE_LABELS[staff.role] %></small></span></div>
+    <form method="post" action="/admin/logout"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-ghost btn-small side-out" type="submit">Sign out</button></form>
   </aside>
   <div class="admin-main">
     <button class="btn btn-ghost btn-small admin-menu-btn" type="button" data-admin-menu>☰ Menu</button>

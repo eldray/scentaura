@@ -1,5 +1,5 @@
-<h1>Reviews</h1><p><a href="/admin/content/reviews?status=pending">Waiting</a> · <a href="/admin/content/reviews?status=approved">Approved</a> · <a href="/admin/content/reviews?status=rejected">Rejected</a></p>
+<h1>Reviews</h1><nav class="tabs"><a href="/admin/content/pages">← Pages</a><a href="/admin/content/reviews?status=pending">Waiting</a><a href="/admin/content/reviews?status=approved">Approved</a><a href="/admin/content/reviews?status=rejected">Rejected</a></nav>
 <% reviews.forEach(r => { %><div class="box"><p><strong><%= r.product_name %></strong> – <%= '★'.repeat(r.rating) %> by <%= r.author_name %> · <%= r.created_at %></p><p><%= r.body %></p>
 <form method="post" action="/admin/content/reviews/<%= r.id %>" class="inline-form"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="back" value="<%= status %>"><button class="btn btn-small" name="status" value="approved">Approve</button><button class="btn btn-small btn-ghost" name="status" value="rejected">Reject</button></form></div><% }) %>
-<% if (!reviews.length) { %><p>Nothing here.</p><% } %>
+<% if (!reviews.length) { %><p><div class="box empty-box">Nothing here yet.</div></p><% } %>
 <p class="small">Only customers who received the product can write reviews. Never add fake reviews.</p>

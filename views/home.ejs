@@ -11,11 +11,11 @@
 <section>
   <h2 class="section-title">Popular categories</h2>
   <div class="cat-grid">
-    <a class="cat cat-women" href="/women"><span class="cat-img"></span><span class="cat-label">Women</span></a>
-    <a class="cat cat-men" href="/men"><span class="cat-img"></span><span class="cat-label">Men</span></a>
-    <a class="cat cat-unisex" href="/unisex"><span class="cat-img"></span><span class="cat-label">Unisex</span></a>
-    <a class="cat cat-new" href="/new-arrivals"><span class="cat-img"></span><span class="cat-label">New arrivals</span></a>
-    <a class="cat cat-best" href="/best-sellers"><span class="cat-img"></span><span class="cat-label">Best sellers</span></a>
+    <a class="cat cat-women" href="/women"><span class="cat-img"<% if (S.cat_img_women) { %> style="background-image:url('<%= S.cat_img_women %>')"<% } %>></span><span class="cat-label">Women</span></a>
+    <a class="cat cat-men" href="/men"><span class="cat-img"<% if (S.cat_img_men) { %> style="background-image:url('<%= S.cat_img_men %>')"<% } %>></span><span class="cat-label">Men</span></a>
+    <a class="cat cat-unisex" href="/unisex"><span class="cat-img"<% if (S.cat_img_unisex) { %> style="background-image:url('<%= S.cat_img_unisex %>')"<% } %>></span><span class="cat-label">Unisex</span></a>
+    <a class="cat cat-new" href="/new-arrivals"><span class="cat-img"<% if (S.cat_img_new) { %> style="background-image:url('<%= S.cat_img_new %>')"<% } %>></span><span class="cat-label">New arrivals</span></a>
+    <a class="cat cat-best" href="/best-sellers"><span class="cat-img"<% if (S.cat_img_best) { %> style="background-image:url('<%= S.cat_img_best %>')"<% } %>></span><span class="cat-label">Best sellers</span></a>
   </div>
 </section>
 

@@ -36,14 +36,16 @@ router.post('/', (req, res) => {
 });
 
 /* logo / hero image (multipart: CSRF token is in the URL) */
+const IMAGE_KEYS = { logo: 'logo_path', hero: 'hero_image', 'cat-women': 'cat_img_women', 'cat-men': 'cat_img_men', 'cat-unisex': 'cat_img_unisex', 'cat-new': 'cat_img_new', 'cat-best': 'cat_img_best' };
+
 router.post('/image/:which', (req, res, next) => upload.single('image')(req, res, err => {
   if (err) { res.flash('error', err.message); return res.redirect('/admin/settings'); }
   next();
 }), async (req, res) => {
-  const key = req.params.which === 'logo' ? 'logo_path' : req.params.which === 'hero' ? 'hero_image' : null;
+  const key = IMAGE_KEYS[req.params.which] || null;
   if (!key || !req.file) { res.flash('error', 'Choose an image first.'); return res.redirect('/admin/settings'); }
   try {
-    const saved = await saveImage(req.file.buffer, { maxWidth: key === 'logo_path' ? 600 : 2000 });
+    const saved = await saveImage(req.file.buffer, { maxWidth: key === 'logo_path' ? 600 : key.startsWith('cat_img') ? 900 : 2000 });
     removeFile(settings.get(key, '', db(req)));
     settings.set(key, saved.path, db(req));
     infra.audit(req, 'settings_image', 'settings', key);
@@ -53,7 +55,7 @@ router.post('/image/:which', (req, res, next) => upload.single('image')(req, res
 });
 
 router.post('/image/:which/remove', (req, res) => {
-  const key = req.params.which === 'logo' ? 'logo_path' : req.params.which === 'hero' ? 'hero_image' : null;
+  const key = IMAGE_KEYS[req.params.which] || null;
   if (key) { removeFile(settings.get(key, '', db(req))); settings.set(key, '', db(req)); }
   res.redirect('/admin/settings');
 });

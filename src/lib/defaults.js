@@ -11,6 +11,7 @@ const SETTINGS = {
   hero_title: 'Luxury fragrances for every moment',
   hero_subtitle: 'Browse our collection and have it delivered across Ghana.',
   hero_image: '',
+  cat_img_women: '', cat_img_men: '', cat_img_unisex: '', cat_img_new: '', cat_img_best: '',
   announcement: '',
   contact_email: '',
   contact_phone: '',

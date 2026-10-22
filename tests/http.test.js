@@ -146,7 +146,7 @@ test('role permissions are enforced on the backend (GET and POST)', async () => 
   const { server, base, db } = await boot();
   try {
     const expect = {
-      owner: { allow: ['/admin', '/admin/orders', '/admin/products', '/admin/inventory', '/admin/suppliers', '/admin/reports', '/admin/expenses', '/admin/settings', '/admin/users', '/admin/payments', '/admin/customers', '/admin/promotions', '/admin/deliveries', '/admin/content/pages'], deny: [] },
+      owner: { allow: ['/admin', '/admin/orders', '/admin/products', '/admin/inventory', '/admin/suppliers', '/admin/reports', '/admin/expenses', '/admin/settings', '/admin/users', '/admin/payments', '/admin/customers', '/admin/promotions', '/admin/deliveries', '/admin/content/pages', '/admin/account', '/admin/help', '/admin/content/blog', '/admin/content/faqs', '/admin/content/reviews'], deny: [] },
       manager: { allow: ['/admin', '/admin/orders', '/admin/products', '/admin/reports', '/admin/payments'], deny: ['/admin/settings', '/admin/users'] },
       sales: { allow: ['/admin', '/admin/orders', '/admin/customers', '/admin/deliveries'], deny: ['/admin/products', '/admin/inventory', '/admin/reports', '/admin/expenses', '/admin/payments', '/admin/settings', '/admin/users', '/admin/suppliers', '/admin/promotions'] },
       inventory: { allow: ['/admin', '/admin/products', '/admin/inventory', '/admin/suppliers'], deny: ['/admin/orders', '/admin/reports', '/admin/customers', '/admin/payments', '/admin/settings', '/admin/users', '/admin/expenses'] }

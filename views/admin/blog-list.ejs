@@ -1,2 +1,2 @@
-<div class="admin-top"><h1>Blog</h1><a class="btn btn-gold" href="/admin/content/blog/new">+ New article</a></div><p><a href="/admin/content/pages">← Pages</a></p>
+<div class="admin-top"><h1>Blog</h1><a class="btn btn-gold" href="/admin/content/blog/new">+ New article</a></div><nav class="tabs"><a href="/admin/content/pages">Pages &amp; policies</a><a href="/admin/content/faqs">FAQ</a><a href="/admin/content/blog" aria-current="page">Blog</a><a href="/admin/content/reviews">Reviews</a></nav>
 <div class="box"><table class="table"><tbody><% posts.forEach(p => { %><tr><td><a href="/admin/content/blog/<%= p.id %>"><%= p.title %></a></td><td><%= p.created_at.slice(0,10) %></td><td><%= p.published ? 'Published' : 'Hidden' %></td></tr><% }) %></tbody></table></div>

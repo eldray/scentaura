@@ -21,4 +21,12 @@
 <form method="post" action="/admin/settings/image/logo?_csrf=<%= csrfToken %>" enctype="multipart/form-data" class="inline-form"><input type="file" name="image" accept="image/jpeg,image/png,image/webp" required><button class="btn btn-small">Upload logo</button></form></div>
 <div><p>Home banner image: <%= S.hero_image ? '' : 'none' %></p><% if (S.hero_image) { %><img src="<%= S.hero_image %>" alt="Banner" style="max-height:90px"><form method="post" action="/admin/settings/image/hero/remove"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="link">Remove</button></form><% } %>
 <form method="post" action="/admin/settings/image/hero?_csrf=<%= csrfToken %>" enctype="multipart/form-data" class="inline-form"><input type="file" name="image" accept="image/jpeg,image/png,image/webp" required><button class="btn btn-small">Upload image</button></form></div></div>
-<p class="small">Only upload images you own or have a licence to use.</p></div>
+<p class="small">Only upload images you own or have a licence to use.</p>
+<h3 style="margin-top:1.2rem">Home page category pictures</h3>
+<p class="small">These are sample pictures. Upload your own to replace them (portrait photos about 4:5 work best). Remove a picture to go back to the sample.</p>
+<div class="cat-admin">
+<% [['cat-women','cat_img_women','Women'],['cat-men','cat_img_men','Men'],['cat-unisex','cat_img_unisex','Unisex'],['cat-new','cat_img_new','New arrivals'],['cat-best','cat_img_best','Best sellers']].forEach(c => { %>
+<div class="cat-up"><strong><%= c[2] %></strong>
+<% if (S[c[1]]) { %><img src="<%= S[c[1]] %>" alt="<%= c[2] %> picture"><form method="post" action="/admin/settings/image/<%= c[0] %>/remove"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="link">Use sample picture</button></form><% } else { %><div class="cat-sample">Sample picture</div><% } %>
+<form method="post" action="/admin/settings/image/<%= c[0] %>?_csrf=<%= csrfToken %>" enctype="multipart/form-data" class="inline-form"><input type="file" name="image" accept="image/jpeg,image/png,image/webp" required><button class="btn btn-small">Upload</button></form></div>
+<% }) %></div></div>
