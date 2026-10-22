@@ -1,0 +1,3 @@
+<h1>Activity log</h1><p><a href="/admin/settings">← Settings</a></p><div class="box"><table class="table"><thead><tr><th>When (UTC)</th><th>Who</th><th>Action</th><th>What</th><th>Details</th><th>IP</th></tr></thead><tbody>
+<% rows.forEach(r => { %><tr><td><%= r.created_at %></td><td><%= r.user_label %></td><td><%= r.action %></td><td><%= r.entity || '' %> <%= r.entity_id || '' %></td><td class="wrap-ok"><%= r.detail || '' %></td><td><%= r.ip || '' %></td></tr><% }) %></tbody></table>
+<p class="small">Page <%= page %> · <% if (page > 1) { %><a href="?page=<%= page - 1 %>">Newer</a><% } %> <% if (rows.length === 100) { %><a href="?page=<%= page + 1 %>">Older</a><% } %></p></div>

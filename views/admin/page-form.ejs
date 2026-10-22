@@ -1,0 +1,4 @@
+<h1><%= pageTitle %></h1><form method="post" action="/admin/content/pages/<%= p.slug %>" class="box form" style="max-width:820px"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+<%- f.input('title','Page title',p.title,{required:true}) %><%- f.textarea('body','Text',p.body,{rows:18,help:'Leave a blank line between paragraphs. A short line on its own at the start of a paragraph becomes a heading.'}) %>
+<%- f.input('meta_title','Search-engine title (optional)',p.meta_title,{maxlength:70}) %><%- f.input('meta_description','Search-engine description (optional)',p.meta_description,{maxlength:170}) %>
+<%- f.check('approved','I have reviewed and approve this page for launch',p.approved) %><button class="btn btn-gold" type="submit">Save</button> <a href="/admin/content/pages">Cancel</a></form>

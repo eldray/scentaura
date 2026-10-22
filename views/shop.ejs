@@ -1,0 +1,52 @@
+<section class="shop-hero">
+  <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> / <span><%= heading %></span></nav>
+  <h1><%= heading %></h1>
+  <% if (intro) { %><p class="lead"><%= intro %></p><% } %>
+</section>
+<% const pills = [['/shop','All'],['/women','Women'],['/men','Men'],['/unisex','Unisex'],['/new-arrivals','New'],['/best-sellers','Best sellers'],['/offers','Offers']]; %>
+<% if (typeof isSearch === 'undefined') { %><nav class="pills" aria-label="Browse by category"><% pills.forEach(p => { %><a href="<%= p[0] %>"<%- pathName === p[0] ? ' aria-current="page"' : '' %>><%= p[1] %></a><% }) %></nav><% } %>
+
+<div class="shop-layout">
+  <form class="filters" method="get" action="<%= pathName %>">
+    <% if (typeof isSearch !== 'undefined') { %><input type="hidden" name="q" value="<%= f.q || '' %>"><% } %>
+    <details open>
+      <summary>Filters</summary>
+      <% if (!lockedAudience) { %>
+      <fieldset><legend>For</legend>
+        <% [['','Anyone'],['men','Men'],['women','Women'],['unisex','Unisex']].forEach(a => { %><label><input type="radio" name="audience" value="<%= a[0] %>" <%= (f.audience || '') === a[0] ? 'checked' : '' %>> <%= a[1] %></label><% }) %>
+      </fieldset>
+      <% } %>
+      <fieldset><legend>Price (<%= S.currency_symbol %>)</legend>
+        <div class="row2"><input type="number" name="min" min="0" step="1" placeholder="Min" value="<%= f.min || '' %>" aria-label="Minimum price"><input type="number" name="max" min="0" step="1" placeholder="Max" value="<%= f.max || '' %>" aria-label="Maximum price"></div>
+      </fieldset>
+      <% const sel = (v) => [].concat(v || []).map(String); %>
+      <% if (facets.brands.length) { %><fieldset><legend>Brand</legend><% facets.brands.forEach(b => { %><label><input type="checkbox" name="brand" value="<%= b.slug %>" <%= sel(f.brand).includes(b.slug) ? 'checked' : '' %>> <%= b.name %></label><% }) %></fieldset><% } %>
+      <% if (facets.sizes.length) { %><fieldset><legend>Size</legend><% facets.sizes.forEach(s => { %><label><input type="checkbox" name="size" value="<%= s %>" <%= sel(f.size).includes(String(s)) ? 'checked' : '' %>> <%= s %> ml</label><% }) %></fieldset><% } %>
+      <% if (facets.families.length) { %><fieldset><legend>Fragrance family</legend><% facets.families.forEach(s => { %><label><input type="checkbox" name="family" value="<%= s %>" <%= sel(f.family).includes(s) ? 'checked' : '' %>> <%= s %></label><% }) %></fieldset><% } %>
+      <% if (facets.concentrations.length) { %><fieldset><legend>Concentration</legend><% facets.concentrations.forEach(s => { %><label><input type="checkbox" name="concentration" value="<%= s %>" <%= sel(f.concentration).includes(s) ? 'checked' : '' %>> <%= s %></label><% }) %></fieldset><% } %>
+      <fieldset><legend>Availability</legend><label><input type="checkbox" name="inStock" value="1" <%= f.inStock ? 'checked' : '' %>> In stock only</label></fieldset>
+      <input type="hidden" name="sort" value="<%= result.sort %>">
+      <button class="btn" type="submit">Apply filters</button> <a class="btn btn-ghost" href="<%= pathName %><%= typeof isSearch !== 'undefined' && f.q ? '?q=' + encodeURIComponent(f.q) : '' %>">Clear</a>
+    </details>
+  </form>
+
+  <div>
+    <div class="toolbar">
+      <p class="count"><strong><%= result.total %></strong> product<%= result.total === 1 ? '' : 's' %></p>
+      <form method="get" action="<%= pathName %>" class="sort">
+        <% Object.keys(f).filter(k => !['sort','page'].includes(k)).forEach(k => { [].concat(f[k]).forEach(v => { %><input type="hidden" name="<%= k %>" value="<%= v %>"><% }) }) %>
+        <label for="sort">Sort by</label>
+        <select id="sort" name="sort" data-autosubmit>
+          <% [['featured','Featured'],['newest','Newest'],['popular','Most popular'],['rating','Best rated'],['price_asc','Price: low to high'],['price_desc','Price: high to low']].forEach(o => { %><option value="<%= o[0] %>" <%= result.sort === o[0] ? 'selected' : '' %>><%= o[1] %></option><% }) %>
+        </select>
+        <noscript><button class="btn" type="submit">Sort</button></noscript>
+      </form>
+    </div>
+    <% if (result.products.length) { %>
+      <div class="grid"><% result.products.forEach(p => { %><%- include('partials/product-card', { p }) %><% }) %></div>
+      <%- include('partials/pagination', { result, pathName, query }) %>
+    <% } else { %>
+      <div class="notice empty"><h2>Nothing found</h2><p>Try removing some filters<% if (typeof isSearch !== 'undefined') { %> or searching for a different word<% } %>.</p><a class="btn" href="/shop">Browse all fragrances</a></div>
+    <% } %>
+  </div>
+</div>

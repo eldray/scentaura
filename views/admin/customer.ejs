@@ -1,0 +1,4 @@
+<div class="admin-top"><h1><%= c.name %></h1><a href="/admin/customers">← Customers</a></div>
+<div class="box"><p><%= c.email %> · <%= c.phone || 'no phone' %><br>Joined <%= c.created_at.slice(0,10) %> · Marketing consent: <%= c.marketing_consent ? 'Yes (' + c.marketing_consent_at + ')' : 'No' %><br>Referral code: <%= c.referral_code %><% if (referrer) { %> · Referred by <a href="/admin/customers/<%= referrer.id %>"><%= referrer.name %></a><% } %></p>
+<% if (referred.length) { %><p>Referred: <%= referred.map(r => r.name).join(', ') %></p><% } %></div>
+<div class="box"><h2>Orders</h2><table class="table"><tbody><% orders.forEach(o => { %><tr><td><a href="/admin/orders/<%= o.id %>"><%= o.order_no %></a></td><td><%= o.created_at.slice(0,10) %></td><td><%= ORDER_STATUSES[o.status] %></td><td class="num"><%= ghs(o.total) %></td></tr><% }) %><% if (!orders.length) { %><tr><td>No orders.</td></tr><% } %></tbody></table></div>

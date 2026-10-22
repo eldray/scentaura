@@ -1,0 +1,9 @@
+<div class="admin-top"><h1>Customers</h1><a class="btn btn-ghost" href="/admin/customers/marketing-list.csv">Export marketing-consent list</a></div>
+<form class="filter-bar" method="get"><div class="field"><label for="q">Search</label><input id="q" name="q" value="<%= q %>" placeholder="Name, email or phone"></div><button class="btn btn-small">Search</button></form>
+<div class="box"><h2>Registered customers</h2><table class="table"><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th class="num">Orders</th><th class="num">Spent</th><th>Marketing OK</th><th>Joined</th></tr></thead><tbody>
+<% rows.forEach(c => { %><tr><td><a href="/admin/customers/<%= c.id %>"><%= c.name %></a></td><td><%= c.email %></td><td><%= c.phone || '' %></td><td class="num"><%= c.orders %></td><td class="num"><%= ghs(c.spent) %></td><td><%= c.marketing_consent ? 'Yes' : 'No' %></td><td><%= c.created_at.slice(0,10) %></td></tr><% }) %>
+<% if (!rows.length) { %><tr><td colspan="7">None yet.</td></tr><% } %></tbody></table></div>
+<div class="box"><h2>Guest buyers</h2><table class="table"><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th class="num">Orders</th><th class="num">Total</th><th>Marketing OK</th><th>Last order</th></tr></thead><tbody>
+<% guests.forEach(c => { %><tr><td><%= c.customer_name %></td><td><%= c.customer_email %></td><td><%= c.customer_phone %></td><td class="num"><%= c.orders %></td><td class="num"><%= ghs(c.spent) %></td><td><%= c.consent ? 'Yes' : 'No' %></td><td><%= c.last_order.slice(0,10) %></td></tr><% }) %>
+<% if (!guests.length) { %><tr><td colspan="7">None yet.</td></tr><% } %></tbody></table>
+<p class="small">Only contact people for marketing if “Marketing OK” is Yes. Order updates (confirmation, dispatch) are not marketing.</p></div>

@@ -1,0 +1,5 @@
+<h1>My account</h1><div class="box" style="max-width:520px"><p><strong><%= staff.name %></strong> – <%= ROLE_LABELS[staff.role] %><br><%= staff.email %></p>
+<h2>Change my password</h2><form method="post" action="/admin/account/password" class="form"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+<%- f.input('current','Current password','',{type:'password',required:true,autocomplete:'current-password'}) %>
+<%- f.input('password','New password (10+ characters)','',{type:'password',required:true,autocomplete:'new-password'}) %>
+<%- f.input('password2','Repeat new password','',{type:'password',required:true,autocomplete:'new-password'}) %><button class="btn" type="submit">Change password</button></form></div>

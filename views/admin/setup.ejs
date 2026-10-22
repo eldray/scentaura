@@ -1,0 +1,9 @@
+<div class="login-box"><h1>Create the owner account</h1>
+<p class="small">This page works only while no staff account exists. You need the ADMIN_SETUP_TOKEN from your server settings.</p>
+<% if (errors.length) { %><div class="alert alert-error"><ul><% errors.forEach(e => { %><li><%= e %></li><% }) %></ul></div><% } %>
+<form method="post" action="/admin/setup" class="form"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+<%- f.input('token','Setup token','',{required:true,type:'password',autocomplete:'off'}) %>
+<%- f.input('name','Your name','',{required:true}) %><%- f.input('email','Email','',{required:true,type:'email'}) %>
+<%- f.input('password','Password (10+ characters)','',{required:true,type:'password',autocomplete:'new-password'}) %>
+<%- f.input('password2','Repeat password','',{required:true,type:'password',autocomplete:'new-password'}) %>
+<button class="btn btn-gold btn-block" type="submit">Create owner</button></form></div>

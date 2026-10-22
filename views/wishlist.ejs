@@ -1,0 +1,4 @@
+<h1>My wishlist</h1>
+<% if (!products.length) { %><div class="notice center"><p>You have not saved anything yet.</p><a class="btn" href="/shop">Browse perfumes</a></div>
+<% } else { %><div class="grid"><% products.forEach(p => { %><div><%- include('partials/product-card', { p }) %>
+  <form method="post" action="/wishlist/toggle" class="center"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="productId" value="<%= p.id %>"><button class="link" type="submit">Remove</button></form></div><% }) %></div><% } %>

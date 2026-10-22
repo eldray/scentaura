@@ -1,0 +1,40 @@
+<% const first = (customer.name || '').split(' ')[0]; const refUrl = baseUrl + '/register?ref=' + customer.referral_code; const paid = myOrders.filter(o => o.status !== 'cancelled').length; %>
+<section class="acct-hero">
+  <div><p class="eyebrow">My account</p><h1>Welcome back, <%= first %></h1><p class="small"><%= customer.email %></p></div>
+  <ul class="stats">
+    <li><strong><%= myOrders.length %></strong><span>Orders</span></li>
+    <li><strong><%= paid %></strong><span>Active / completed</span></li>
+    <li><strong><%= referrals %></strong><span>Friends joined</span></li>
+  </ul>
+</section>
+<div class="cart-layout">
+  <div>
+    <section class="panel"><h2 class="h3">My orders</h2>
+      <% if (!myOrders.length) { %><p>No orders yet. <a href="/shop">Start shopping</a>. If you ordered as a guest, use <a href="/track">Track your order</a>.</p><% } else { %>
+      <table class="table"><thead><tr><th>Order</th><th>Date</th><th>Status</th><th>Total</th></tr></thead><tbody>
+        <% myOrders.forEach(o => { %><tr><td><a href="/order/<%= o.order_no %>"><%= o.order_no %></a></td><td><%= o.created_at.slice(0,10) %></td><td><%= ORDER_STATUSES[o.status] %></td><td><%= ghs(o.total) %></td></tr><% }) %>
+      </tbody></table><% } %></section>
+    <section class="panel referral"><h2 class="h3">Invite friends</h2>
+      <p>Share your link. <% if (S.referral_discount_percent !== '0') { %>A friend who uses your code on their first order gets <strong><%= S.referral_discount_percent %>% off</strong>.<% } %></p>
+      <p class="small">Your code</p><p class="refcode"><%= customer.referral_code %></p>
+      <label class="small" for="reflink">Your share link</label>
+      <div class="copyrow"><input id="reflink" type="text" readonly value="<%= refUrl %>"><button class="btn btn-small" type="button" data-copy="#reflink">Copy</button></div>
+      <p><a class="btn btn-small btn-ghost" target="_blank" rel="noopener" href="https://wa.me/?text=<%= encodeURIComponent('Get ' + (S.referral_discount_percent !== '0' ? S.referral_discount_percent + '% off ' : '') + 'your first perfume order at ' + S.business_name + ': ' + refUrl) %>">Share on WhatsApp</a></p></section>
+  </div>
+  <aside>
+    <section class="panel"><h2 class="h3">My details</h2>
+      <form method="post" action="/account/profile" class="form"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <%- f.input('name', 'Name', customer.name, {required:true}) %>
+        <%- f.input('phone', 'Phone', customer.phone || '', {type:'tel'}) %>
+        <p class="small">Email: <%= customer.email %></p>
+        <%- f.check('marketingConsent', 'Send me news and offers', customer.marketing_consent, {value:'1'}) %>
+        <button class="btn" type="submit">Save</button></form></section>
+    <section class="panel"><h2 class="h3">Change password</h2>
+      <form method="post" action="/account/password" class="form"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <%- f.input('current', 'Current password', '', {type:'password', required:true, autocomplete:'current-password'}) %>
+        <%- f.input('password', 'New password', '', {type:'password', required:true, autocomplete:'new-password'}) %>
+        <%- f.input('password2', 'Repeat new password', '', {type:'password', required:true, autocomplete:'new-password'}) %>
+        <button class="btn" type="submit">Change password</button></form></section>
+    <form method="post" action="/logout"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-ghost" type="submit">Sign out</button></form>
+  </aside>
+</div>

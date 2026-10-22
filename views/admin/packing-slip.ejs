@@ -1,0 +1,9 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Packing slip <%= o.order_no %></title><link rel="stylesheet" href="/public/css/site.css"></head>
+<body class="packing"><h1><%= S.business_name %> – Packing slip</h1>
+<p><strong>Order <%= o.order_no %></strong> · <%= o.created_at %> UTC<br>Payment: <%= o.payment_method === 'cod' ? 'PAY ON DELIVERY – collect ' + ghs(o.total) : 'Paid online' %></p>
+<h3>Deliver to</h3><p><strong><%= o.customer_name %></strong> · <%= o.customer_phone %><br><% if (o.ship_line1) { %><%= o.ship_line1 %>, <%= o.ship_town %>, <%= o.ship_region %><%= o.ship_digital_address ? ' (' + o.ship_digital_address + ')' : '' %><% } else { %>CUSTOMER PICKUP<% } %><br><%= o.zone_name %> – <%= o.delivery_name %></p>
+<% if (o.delivery_notes) { %><p><strong>Note:</strong> <%= o.delivery_notes %></p><% } %>
+<table class="table"><thead><tr><th>☐</th><th>Item</th><th>SKU</th><th>Qty</th></tr></thead><tbody><% items.forEach(i => { %><tr><td>☐</td><td><%= i.product_name %> (<%= i.size_label %>)</td><td><%= i.sku %></td><td><%= i.qty %></td></tr><% }) %></tbody></table>
+<p>Thank you for shopping with <%= S.business_name %>.<% if (S.contact_phone) { %> Questions: <%= S.contact_phone %><% } %></p>
+<p class="small"><button class="btn" id="pb">Print</button></p>
+<script src="/public/js/print.js"></script></body></html>

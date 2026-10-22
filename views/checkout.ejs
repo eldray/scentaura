@@ -1,0 +1,61 @@
+<h1>Checkout</h1>
+<% if (errors.length) { %><div class="alert alert-error" role="alert"><strong>Please fix the following:</strong><ul><% errors.forEach(e => { %><li><%= e %></li><% }) %></ul></div><% } %>
+<% priced.errors.forEach(e => { %><div class="alert alert-info"><%= e.message %></div><% }) %>
+<% if (!rates.length) { %><div class="alert alert-error">Delivery has not been set up yet. Please contact the shop<% if (waLink()) { %> on <a href="<%= waLink() %>">WhatsApp</a><% } %>.</div><% } %>
+<% if (!payOptions.length) { %><div class="alert alert-error">No payment method is available right now. Please contact the shop.</div><% } %>
+
+<form method="post" action="/checkout/review" class="checkout-layout" novalidate>
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <div>
+    <fieldset class="panel">
+      <legend>1. Your details</legend>
+      <%- f.input('name', 'Full name', draft.name, {required:true, autocomplete:'name', maxlength:120}) %>
+      <%- f.input('phone', 'Phone number', draft.phone, {required:true, type:'tel', autocomplete:'tel', placeholder:'024 123 4567 or +233 24 123 4567', inputmode:'tel'}) %>
+      <%- f.input('email', 'Email address', draft.email, {required:true, type:'email', autocomplete:'email', help:'We send your order confirmation here.'}) %>
+    </fieldset>
+
+    <fieldset class="panel">
+      <legend>2. Delivery</legend>
+      <div class="field"><label for="rateId">Delivery option <span class="req">*</span></label>
+        <select id="rateId" name="rateId" required data-rate-select>
+          <option value="">Choose where and how…</option>
+          <% const groups = {}; rates.forEach(r => { (groups[r.zone_name] = groups[r.zone_name] || []).push(r); }); %>
+          <% Object.keys(groups).forEach(z => { %><optgroup label="<%= z %>">
+            <% groups[z].forEach(r => { %><option value="<%= r.id %>" data-method="<%= r.method %>" <%= Number(draft.rateId) === r.id ? 'selected' : '' %>><%= r.name %> – <%= r.fee === 0 ? 'Free' : ghs(r.fee) %><%= r.free_over !== null ? ' (free over ' + ghs(r.free_over) + ')' : '' %><%= r.eta_text ? ' · ' + r.eta_text : '' %></option><% }) %>
+          </optgroup><% }) %>
+        </select>
+      </div>
+      <div data-address-fields>
+        <%- f.input('line1', 'Street address / house number / landmark', draft.line1, {autocomplete:'address-line1', maxlength:200}) %>
+        <div class="row2">
+          <%- f.input('town', 'Town / area', draft.town, {autocomplete:'address-level2', maxlength:100}) %>
+          <%- f.select('region', 'Region', [{value:'',label:'Choose…'}].concat(GH_REGIONS.map(r => ({value:r,label:r}))), draft.region) %>
+        </div>
+        <%- f.input('digitalAddress', 'Ghana Post digital address (optional)', draft.digitalAddress, {placeholder:'GA-123-4567', maxlength:20}) %>
+      </div>
+      <%- f.textarea('notes', 'Delivery instructions (optional)', draft.notes, {rows:2, maxlength:500, placeholder:'e.g. Call when you reach the gate'}) %>
+    </fieldset>
+
+    <fieldset class="panel">
+      <legend>3. Payment</legend>
+      <% payOptions.forEach((o, i) => { %>
+        <label class="pay-opt"><input type="radio" name="paymentMethod" value="<%= o.value %>" <%= draft.paymentMethod === o.value || (!draft.paymentMethod && i === 0) ? 'checked' : '' %>> <strong><%= o.label %></strong><small><%= o.hint %></small></label>
+      <% }) %>
+      <%- f.check('marketingConsent', 'Yes, send me news and offers by email/SMS/WhatsApp. (Optional – you can stop any time.)', draft.marketingConsent, {value:'1'}) %>
+    </fieldset>
+    <button class="btn btn-gold btn-block" type="submit">Review my order</button>
+  </div>
+
+  <aside class="summary">
+    <h2>Your order</h2>
+    <% priced.lines.forEach(l => { %><div class="mini-line"><span><%= l.qty %> × <%= l.name %> <small>(<%= l.size %>)</small></span><span><%= ghs(l.lineTotal) %></span></div><% }) %>
+    <dl class="totals">
+      <dt>Subtotal</dt><dd><%= ghs(priced.subtotal) %></dd>
+      <% if (priced.discount) { %><dt>Discount (<%= priced.coupon.code %>)</dt><dd>-<%= ghs(priced.discount) %></dd><% } %>
+      <dt>Delivery</dt><dd data-delivery><%= priced.rate ? (priced.deliveryFee ? ghs(priced.deliveryFee) : 'Free') : 'Choose an option' %></dd>
+      <dt class="grand">Total</dt><dd class="grand" data-total><%= ghs(priced.total) %></dd>
+    </dl>
+    <p class="small">The final amount is checked again by our system when you confirm.</p>
+    <a href="/cart" class="small">Change your cart</a>
+  </aside>
+</form>

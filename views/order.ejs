@@ -1,0 +1,53 @@
+<h1>Order <%= o.order_no %></h1>
+<% const steps = ['paid','processing','packed','dispatched','out_for_delivery','delivered']; const idx = steps.indexOf(o.status); %>
+<div class="status-banner status-<%= o.status %>">
+  <strong><%= ORDER_STATUSES[o.status] %></strong>
+  <span>
+    <% if (o.payment_status === 'paid' || o.payment_status === 'partially_refunded') { %>Payment received.
+    <% } else if (o.payment_status === 'refunded') { %>This order has been refunded.
+    <% } else if (o.payment_method === 'cod') { %>You will pay when your order arrives.
+    <% } else if (o.status === 'payment_pending' || o.payment_status === 'pending') { %>Waiting for your payment to be confirmed.
+    <% } else if (o.payment_status === 'failed' || o.payment_status === 'cancelled') { %>Your payment was not completed.<% } %>
+  </span>
+</div>
+
+<% if (canPay) { %>
+<form method="post" action="/order/<%= o.order_no %>/pay" class="panel center">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="t" value="<%= o.tracking_token %>">
+  <p>Your order is saved but not yet paid. Mobile Money approvals can take a minute – if you already approved the payment, wait a moment, then press the button to check.</p>
+  <button class="btn btn-gold" type="submit">Pay now <%= ghs(o.total) %></button>
+</form>
+<% } %>
+
+<div class="cart-layout">
+  <div>
+    <section class="panel">
+      <h2 class="h3">Items</h2>
+      <% items.forEach(i => { %><div class="mini-line"><span><%= i.qty %> × <%= i.product_name %> <small>(<%= i.size_label %>)</small></span><span><%= ghs(i.line_total) %></span></div><% }) %>
+      <dl class="totals">
+        <dt>Subtotal</dt><dd><%= ghs(o.subtotal) %></dd>
+        <% if (o.discount) { %><dt>Discount<%= o.coupon_code ? ' (' + o.coupon_code + ')' : '' %></dt><dd>-<%= ghs(o.discount) %></dd><% } %>
+        <dt>Delivery</dt><dd><%= o.delivery_fee ? ghs(o.delivery_fee) : 'Free' %></dd>
+        <dt class="grand">Total</dt><dd class="grand"><%= ghs(o.total) %></dd>
+      </dl>
+    </section>
+    <section class="panel">
+      <h2 class="h3">Progress</h2>
+      <ol class="timeline">
+        <% events.slice().reverse().forEach(e => { %><li><strong><%= e.kind === 'delivery_attempt' ? 'Delivery attempt' : ORDER_STATUSES[e.status] || e.status %></strong><small><%= e.created_at %> UTC</small><% if (e.note && e.kind === 'delivery_attempt') { %><span><%= e.note %></span><% } %></li><% }) %>
+      </ol>
+    </section>
+  </div>
+  <aside class="summary">
+    <h2>Delivery</h2>
+    <p><strong><%= o.zone_name %> – <%= o.delivery_name %></strong></p>
+    <% if (o.delivery_method === 'pickup') { %><p><%= rateInstructions || 'Collect from us once we tell you it is ready.' %></p>
+    <% } else { %><p><%= o.customer_name %><br><%= o.ship_line1 %><br><%= o.ship_town %>, <%= o.ship_region %></p><% } %>
+    <% if (courier) { %><p>Courier: <strong><%= courier.name %></strong><% if (courier.phone) { %> (<%= courier.phone %>)<% } %></p><% } %>
+    <% if (o.tracking_no) { %><p>Tracking number: <strong><%= o.tracking_no %></strong><% if (trackUrl) { %> · <a href="<%= trackUrl %>" target="_blank" rel="noopener">Track with courier</a><% } %></p><% } %>
+    <% if (o.dispatched_at) { %><p class="small">Dispatched: <%= o.dispatched_at %> UTC</p><% } %>
+    <% if (o.delivered_at) { %><p class="small">Delivered: <%= o.delivered_at %> UTC</p><% } %>
+    <% if (waUrl) { %><a class="btn btn-ghost btn-block" href="<%= waUrl %>" target="_blank" rel="noopener">Questions? WhatsApp us</a><% } %>
+    <p class="small">Keep this page's link to check your order any time.</p>
+  </aside>
+</div>

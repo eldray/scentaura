@@ -1,0 +1,15 @@
+<div class="auth-card"><h1>Create an account</h1>
+<% if (errors.length) { %><div class="alert alert-error" role="alert"><ul><% errors.forEach(e => { %><li><%= e %></li><% }) %></ul></div><% } %>
+<form method="post" action="/register" class="form">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <%- f.input('name', 'Full name', v.name || '', {required:true, autocomplete:'name'}) %>
+  <%- f.input('email', 'Email', v.email || '', {required:true, type:'email', autocomplete:'email'}) %>
+  <%- f.input('phone', 'Phone (optional)', v.phone || '', {type:'tel', autocomplete:'tel', placeholder:'024 123 4567'}) %>
+  <%- f.input('password', 'Password (at least 8 characters)', '', {required:true, type:'password', autocomplete:'new-password', minlength:8}) %>
+  <%- f.input('password2', 'Repeat password', '', {required:true, type:'password', autocomplete:'new-password'}) %>
+  <%- f.input('ref', 'Referral code (optional)', v.ref || '', {maxlength:20}) %>
+  <%- f.check('marketingConsent', 'Send me news and offers (optional).', v.consent, {value:'1'}) %>
+  <p class="small">We use your details only to run your orders. See our <a href="/privacy">privacy policy</a>.</p>
+  <button class="btn btn-gold" type="submit">Create account</button>
+</form>
+<p>Already registered? <a href="/login">Sign in</a>. You can also order without an account.</p></div>

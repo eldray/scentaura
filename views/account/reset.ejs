@@ -1,0 +1,7 @@
+<div class="auth-card"><h1>Choose a new password</h1>
+<% if (!valid) { %><div class="alert alert-error">This link has expired or was already used. <a href="/forgot">Request a new one</a>.</div>
+<% } else { %><% if (error) { %><div class="alert alert-error"><%= error %></div><% } %>
+<form method="post" action="/reset/<%= token %>" class="form"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <%- f.input('password', 'New password', '', {required:true, type:'password', autocomplete:'new-password'}) %>
+  <%- f.input('password2', 'Repeat new password', '', {required:true, type:'password', autocomplete:'new-password'}) %>
+  <button class="btn btn-gold" type="submit">Save password</button></form><% } %></div>

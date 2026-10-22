@@ -1,0 +1,5 @@
+<section class="page-hero"><p class="eyebrow">Help centre</p><h1>Frequently asked questions</h1></section>
+<div class="page-card">
+<% if (!faqs.length) { %><p>No questions yet.</p><% } %>
+<% faqs.forEach(q => { %><details class="faq"><summary><%= q.question %></summary><p><%= q.answer %></p></details><% }) %>
+<p>Still need help? <a href="/contact">Contact us</a>.</p></div>

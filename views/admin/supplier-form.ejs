@@ -1,0 +1,9 @@
+<div class="admin-top"><h1><%= isNew ? 'Add supplier' : s.name %></h1><a href="/admin/suppliers">← Suppliers</a></div>
+<form method="post" action="<%= isNew ? '/admin/suppliers/new' : '/admin/suppliers/' + s.id %>" class="box form"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+<%- f.input('name','Supplier name',s.name,{required:true}) %><%- f.input('contact_person','Contact person',s.contact_person) %><%- f.input('phone','Phone',s.phone) %><%- f.input('email','Email',s.email,{type:'email'}) %><%- f.textarea('address','Address',s.address,{rows:2}) %>
+<%- f.textarea('authenticity_notes','Authenticity evidence you hold',s.authenticity_notes,{rows:4,help:'e.g. authorised-distributor letter, invoice numbers, batch codes. Keep copies of the documents too.'}) %>
+<% if (!isNew) { %><%- f.check('active','Active supplier',s.active) %><% } %><button class="btn btn-gold" type="submit">Save supplier</button></form>
+<% if (!isNew) { %>
+<div class="box"><h2>Balance</h2><p>Received: <%= ghs(bal.received_value) %> · Paid: <%= ghs(bal.paid) %> · <strong>Owed: <%= ghs(bal.owed) %></strong></p></div>
+<div class="box"><h2>Purchase history</h2><table class="table"><tbody><% pos.forEach(p => { %><tr><td><a href="/admin/suppliers/purchases/<%= p.id %>"><%= p.reference %></a></td><td><%= p.order_date %></td><td><%= p.status %></td><td class="num"><%= ghs(p.value) %></td></tr><% }) %><% if (!pos.length) { %><tr><td>None yet.</td></tr><% } %></tbody></table></div>
+<div class="box"><h2>Payments to this supplier</h2><table class="table"><tbody><% payments.forEach(p => { %><tr><td><%= p.paid_on %></td><td class="num"><%= ghs(p.amount) %></td><td><%= p.method || '' %></td><td><%= p.note || '' %></td></tr><% }) %></tbody></table></div><% } %>

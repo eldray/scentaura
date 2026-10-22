@@ -1,0 +1,41 @@
+<div class="admin-top"><h1>Order <%= o.order_no %></h1><div><a class="btn btn-ghost" href="/admin/orders/<%= o.id %>/print" target="_blank" rel="noopener">Print packing slip</a> <a class="btn btn-ghost" href="/admin/orders">← All orders</a></div></div>
+<% if (o.needs_attention) { %><div class="alert alert-error"><strong>Needs attention:</strong> <%= o.needs_attention %>
+<form method="post" action="/admin/orders/<%= o.id %>/clear-flag" class="inline"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="link" type="submit">Mark as handled</button></form></div><% } %>
+<div class="cards"><div class="stat"><div class="l">Status</div><div class="n" style="font-size:1.2rem"><%= ORDER_STATUSES[o.status] %></div></div>
+<div class="stat"><div class="l">Payment</div><div class="n" style="font-size:1.2rem"><%= o.payment_status %></div><div class="l"><%= o.payment_method === 'cod' ? 'Pay on delivery' : 'Paystack' %></div></div>
+<div class="stat"><div class="l">Total</div><div class="n"><%= ghs(o.total) %></div></div><div class="stat"><div class="l">Stock</div><div class="n" style="font-size:1.2rem"><%= o.stock_state %></div></div></div>
+<div class="grid-2"><div>
+<div class="box"><h2>Items</h2><table class="table"><thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Price</th><th class="num">Total</th></tr></thead><tbody>
+<% items.forEach(i => { %><tr><td><%= i.product_name %> <small><%= i.size_label %> · <%= i.sku %></small></td><td class="num"><%= i.qty %></td><td class="num"><%= ghs(i.unit_price) %></td><td class="num"><%= ghs(i.line_total) %></td></tr><% }) %></tbody></table>
+<p class="num">Subtotal <%= ghs(o.subtotal) %> · Discount -<%= ghs(o.discount) %><%= o.coupon_code ? ' (' + o.coupon_code + ')' : '' %> · Delivery <%= ghs(o.delivery_fee) %> · <strong>Total <%= ghs(o.total) %></strong></p></div>
+<div class="box"><h2>Customer &amp; delivery</h2><p><strong><%= o.customer_name %></strong><br><a href="tel:<%= o.customer_phone %>"><%= o.customer_phone %></a> · <%= o.customer_email %><br>
+<a href="https://wa.me/<%= o.customer_phone.replace(/\D/g,'') %>" target="_blank" rel="noopener">WhatsApp customer</a></p>
+<p><%= o.zone_name %> – <%= o.delivery_name %><br><% if (o.ship_line1) { %><%= o.ship_line1 %>, <%= o.ship_town %>, <%= o.ship_region %><%= o.ship_digital_address ? ' (' + o.ship_digital_address + ')' : '' %><% } else { %>Customer pickup<% } %></p>
+<% if (o.delivery_notes) { %><p><strong>Customer note:</strong> <%= o.delivery_notes %></p><% } %></div>
+<div class="box"><h2>History</h2><table class="table"><tbody><% events.forEach(e => { %><tr><td><%= e.created_at %></td><td class="wrap-ok"><%= e.status ? ORDER_STATUSES[e.status] + (e.note ? ' – ' : '') : '' %><%= e.note || '' %></td><td><%= e.user_name || '' %></td></tr><% }) %></tbody></table>
+<form method="post" action="/admin/orders/<%= o.id %>/note" class="inline-form"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input name="note" placeholder="Add an internal note" style="min-width:260px"><button class="btn btn-small btn-ghost">Add</button></form></div>
+</div><div>
+<div class="box"><h2>Change status</h2>
+<% if (!next.length) { %><p class="small">This order is finished.</p><% } else { %>
+<form method="post" action="/admin/orders/<%= o.id %>/status" class="form"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+<%- f.select('status','Move to',next.map(s => ({value:s,label:ORDER_STATUSES[s]})),next[0]) %><%- f.input('note','Note (optional)','',{maxlength:300}) %>
+<% if (['dispatched','out_for_delivery','delivered','return_requested'].includes(o.status)) { %><%- f.check('restock','If “Returned”: put the items back in stock (only if resaleable and sealed)',false,{value:'1'}) %><% } %>
+<button class="btn" type="submit">Update status</button></form><% } %>
+<% if (o.payment_method === 'paystack' && o.payment_status !== 'paid' && o.payment_status !== 'refunded' && o.status !== 'cancelled') { %>
+<form method="post" action="/admin/orders/<%= o.id %>/check-payment"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-ghost" type="submit">Check payment with Paystack</button></form><% } %>
+<% if (o.payment_method === 'cod' && o.payment_status !== 'paid' && o.status !== 'cancelled') { %>
+<form method="post" action="/admin/orders/<%= o.id %>/collect-cod" data-confirm="Confirm you have received <%= ghs(o.total) %> in cash/MoMo?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-gold" type="submit">Record cash collected (<%= ghs(o.total) %>)</button></form><% } %></div>
+<div class="box"><h2>Courier &amp; tracking</h2><form method="post" action="/admin/orders/<%= o.id %>/shipping" class="form"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+<%- f.select('courier_id','Courier',[{value:'',label:'—'}].concat(couriers.map(c => ({value:c.id,label:c.name}))),o.courier_id) %><%- f.input('tracking_no','Tracking / waybill number',o.tracking_no || '') %><button class="btn btn-small" type="submit">Save</button></form>
+<p class="small">Dispatched: <%= o.dispatched_at || '—' %> · Delivered: <%= o.delivered_at || '—' %></p>
+<form method="post" action="/admin/orders/<%= o.id %>/attempt" class="inline-form"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input name="note" placeholder="Failed delivery attempt – what happened?" style="min-width:240px" required><button class="btn btn-small btn-ghost">Record</button></form></div>
+<% if (canPayments) { %><div class="box"><h2>Payments &amp; refunds</h2>
+<table class="table"><thead><tr><th>Reference</th><th>Status</th><th class="num">Amount</th></tr></thead><tbody><% payments.forEach(p => { %><tr><td><%= p.reference %><br><small><%= p.channel || p.provider %> · <%= p.paid_at || p.created_at %></small></td><td><%= p.status %></td><td class="num"><%= ghs(p.amount) %></td></tr><% }) %><% if (!payments.length) { %><tr><td colspan="3">No payment attempts.</td></tr><% } %></tbody></table>
+<% refunds.forEach(r => { %><p class="small">Refund <%= ghs(r.amount) %> (<%= r.method %>, <%= r.status %>) – <%= r.reason || '' %> <%= r.user_name ? 'by ' + r.user_name : '' %></p><% }) %>
+<% if (canRefund && (o.payment_status === 'paid' || o.payment_status === 'partially_refunded') && refundable > 0) { %>
+<form method="post" action="/admin/orders/<%= o.id %>/refund" class="form" data-confirm="Send this refund? It cannot be undone."><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+<%- f.input('amount','Refund amount (GHS)',fromPesewas(refundable),{required:true,inputmode:'decimal',help:'You can still refund up to ' + ghs(refundable)}) %>
+<%- f.input('reason','Reason','',{required:true}) %>
+<%- f.select('method','How',[{value:'paystack',label:'Back to the customer through Paystack'},{value:'manual',label:'I paid the customer myself (MoMo/cash) – just record it'}],o.payment_method === 'cod' ? 'manual' : 'paystack') %>
+<button class="btn btn-danger" type="submit">Refund</button></form><% } %></div><% } %>
+</div></div>

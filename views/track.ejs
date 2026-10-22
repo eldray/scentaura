@@ -1,0 +1,11 @@
+<div class="auth-card">
+  <h1>Track your order</h1>
+  <p class="center">Enter your order number and the phone number or email you used when ordering.</p>
+  <% if (error) { %><div class="alert alert-error" role="alert"><%= error %></div><% } %>
+  <form method="post" action="/track" class="form">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <%- f.input('orderNo', 'Order number', '', {required:true, placeholder:'SA-261020-ABCDE', maxlength:40, autocomplete:'off'}) %>
+    <%- f.input('contact', 'Phone number or email', '', {required:true, maxlength:254}) %>
+    <button class="btn btn-gold" type="submit">Track order</button>
+  </form>
+</div>

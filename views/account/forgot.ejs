@@ -1,0 +1,4 @@
+<div class="auth-card"><h1>Forgot your password?</h1>
+<% if (sent) { %><div class="alert alert-success">If that email has an account, we have sent a link to choose a new password. It works for one hour.</div>
+<% } else { %><form method="post" action="/forgot" class="form"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <%- f.input('email', 'Your email', '', {required:true, type:'email'}) %><button class="btn btn-gold" type="submit">Send reset link</button></form><% } %></div>

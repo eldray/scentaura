@@ -1,0 +1,8 @@
+<div class="login-box"><h1><%= S.business_name %> staff</h1>
+<% if (firstRun) { %><div class="alert alert-info">No staff account exists yet. Create the owner with <code>npm run create-admin</code> on the server<% if (setupEnabled) { %>, or <a href="/admin/setup">use the one-time setup page</a><% } %>.</div><% } %>
+<% if (error) { %><div class="alert alert-error"><%= error %></div><% } %>
+<form method="post" action="/admin/login" class="form"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+<%- f.input('email','Email','',{required:true,type:'email',autocomplete:'username'}) %>
+<%- f.input('password','Password','',{required:true,type:'password',autocomplete:'current-password'}) %>
+<button class="btn btn-gold btn-block" type="submit">Sign in</button></form>
+<p class="small"><a href="/admin/forgot">Forgot password?</a></p></div>

@@ -1,0 +1,33 @@
+<div class="admin-top"><h1>Dashboard</h1><span class="small">Times are in GMT (Ghana time)</span></div>
+<% if (showChecklist) { %><div class="box"><h2>Getting ready to launch</h2><ul class="checklist">
+<% checklist.forEach(c => { %><li><%= c[1] ? '✅' : '⬜' %> <a href="<%= c[2] %>"><%= c[0] %></a></li><% }) %></ul></div><% } %>
+<% if (data.needsAttention.length) { %><div class="alert alert-error"><strong>Orders needing attention:</strong><ul><% data.needsAttention.forEach(a => { %><li><a href="/admin/orders/<%= a.id %>"><%= a.order_no %></a> – <%= a.needs_attention %></li><% }) %></ul></div><% } %>
+<div class="cards">
+ <div class="stat"><div class="l">Sales today</div><div class="n"><%= ghs(data.today.revenue) %></div><div class="l"><%= data.today.orders %> paid order(s)</div></div>
+ <div class="stat"><div class="l">Sales this week</div><div class="n"><%= ghs(data.week.revenue) %></div><div class="l"><%= data.week.orders %> paid order(s)</div></div>
+ <div class="stat"><div class="l">Sales this month</div><div class="n"><%= ghs(data.month.revenue) %></div><div class="l"><%= data.month.orders %> paid order(s)</div></div>
+ <div class="stat"><a href="/admin/orders"><div class="l">Total orders</div><div class="n"><%= data.totalOrders %></div></a></div>
+ <div class="stat"><a href="/admin/orders?status=awaiting_dispatch"><div class="l">Awaiting dispatch</div><div class="n"><%= data.awaitingDispatch %></div></a></div>
+ <div class="stat"><a href="/admin/orders?payment=pending"><div class="l">Pending / unpaid</div><div class="n"><%= data.pending %></div></a></div>
+ <div class="stat"><a href="/admin/orders?payment=paid"><div class="l">Paid orders</div><div class="n"><%= data.paidOrders %></div></a></div>
+ <div class="stat"><a href="/admin/orders?status=delivered"><div class="l">Delivered</div><div class="n"><%= data.delivered %></div></a></div>
+</div>
+<% if (data.codOutstanding.c) { %><div class="alert alert-info"><%= data.codOutstanding.c %> delivered pay-on-delivery order(s) worth <%= ghs(data.codOutstanding.s) %> have no cash recorded yet. <a href="/admin/orders?status=delivered&payment=unpaid">Check them</a>.</div><% } %>
+<% if (data.pendingReviews) { %><div class="alert alert-info"><%= data.pendingReviews %> review(s) waiting. <a href="/admin/content/reviews">Moderate</a></div><% } %>
+<% if (rng) { %>
+<div class="cards">
+ <div class="stat"><div class="l">Gross profit (month, est.)</div><div class="n"><%= ghs(rng.profit.grossProfit) %></div><div class="l">Margin <%= rng.profit.grossMarginPct.toFixed(1) %>%</div></div>
+ <div class="stat"><div class="l">Discounts given (month)</div><div class="n"><%= ghs(rng.profit.discounts) %></div></div>
+ <div class="stat"><div class="l">Delivery costs (month)</div><div class="n"><%= ghs(rng.profit.deliveryCosts) %></div><div class="l">from Expenses</div></div>
+ <div class="stat"><div class="l">Refunds (month)</div><div class="n"><%= ghs(rng.profit.refunds) %></div></div>
+</div>
+<div class="grid-2">
+ <div class="box"><h2>Best sellers this month</h2><% if (!rng.best.length) { %><p class="small">No paid sales yet this month.</p><% } else { %><table class="table"><tbody><% rng.best.forEach(b => { %><tr><td><%= b.product_name %></td><td class="num"><%= b.units %> sold</td><td class="num"><%= ghs(b.revenue) %></td></tr><% }) %></tbody></table><% } %></div>
+ <div class="box"><h2>Revenue by category</h2><% if (!rng.byCategory.length) { %><p class="small">—</p><% } else { %><table class="table"><tbody><% rng.byCategory.forEach(b => { %><tr><td><%= b.category %></td><td class="num"><%= ghs(b.revenue) %></td></tr><% }) %></tbody></table><% } %>
+ <h2>Payment methods</h2><table class="table"><tbody><% rng.methods.forEach(m => { %><tr><td><%= m.method %></td><td class="num"><%= m.orders %></td><td class="num"><%= ghs(m.amount) %></td></tr><% }) %></tbody></table></div>
+</div><% } %>
+<div class="grid-2">
+ <div class="box"><h2>Low stock</h2><% if (!low.length) { %><p class="small">Nothing running low.</p><% } else { %><table class="table"><tbody><% low.forEach(v => { %><tr><td><%= v.product_name %> <small><%= v.label %></small></td><td class="num"><%= v.on_hand - v.reserved %> left</td></tr><% }) %></tbody></table><% } %></div>
+ <div class="box"><h2>Out of stock</h2><% if (!out.length) { %><p class="small">Nothing sold out.</p><% } else { %><table class="table"><tbody><% out.forEach(v => { %><tr><td><%= v.product_name %> <small><%= v.label %></small></td></tr><% }) %></tbody></table><% } %></div>
+</div>
+<p class="small">“Sales” means orders that are paid and not cancelled. Sales are not profit and not cash in the bank – see Reports.</p>

@@ -1,0 +1,69 @@
+<div class="admin-top"><h1><%= isNew ? 'Add product' : p.name %></h1><% if (!isNew) { %><a href="/product/<%= p.slug %>" target="_blank" rel="noopener">View in shop ↗</a><% } %></div>
+<% if (errors && errors.length) { %><div class="alert alert-error"><%= errors.join(' ') %></div><% } %>
+<form method="post" action="<%= isNew ? '/admin/products/new?_csrf=' + csrfToken : '/admin/products/' + p.id %>"<%- isNew ? ' enctype="multipart/form-data"' : '' %> class="box">
+<input type="hidden" name="_csrf" value="<%= csrfToken %>">
+<div class="grid-2"><div>
+<%- f.input('name','Product name',p.name,{required:true,maxlength:160}) %>
+<%- f.input('brand','Brand',p.brand_name || p.brand || '',{maxlength:80,list:'brands',help:'Type a new brand or pick an existing one.'}) %>
+<datalist id="brands"><% brands.forEach(b => { %><option value="<%= b %>"><% }) %></datalist>
+<%- f.select('category_id','Category',[{value:'',label:'—'}].concat(categories.map(c => ({value:c.id,label:c.name}))),p.category_id) %>
+<%- f.select('audience','For',[{value:'women',label:'Women'},{value:'men',label:'Men'},{value:'unisex',label:'Unisex'}],p.audience) %>
+<%- f.select('status','Status',STATUSES.filter(s => s !== 'archived'),p.status,{help:'Only “active” products appear in the shop. A product needs at least one size first.'}) %>
+<%- f.select('supplier_id','Main supplier',[{value:'',label:'—'}].concat(suppliers.map(s => ({value:s.id,label:s.name}))),p.supplier_id) %>
+<%- f.check('featured','Featured on home page',p.featured) %><%- f.check('is_new','New arrival',p.is_new) %><%- f.check('is_bestseller','Best seller',p.is_bestseller) %>
+</div><div>
+<%- f.input('concentration','Concentration',p.concentration,{placeholder:'Eau de Parfum, Eau de Toilette, Perfume oil…'}) %>
+<%- f.input('fragrance_family','Fragrance family',p.fragrance_family,{placeholder:'Woody, Floral, Fresh, Citrus, Oriental…'}) %>
+<%- f.input('top_notes','Top notes',p.top_notes) %><%- f.input('middle_notes','Middle notes',p.middle_notes) %><%- f.input('base_notes','Base notes',p.base_notes) %>
+<%- f.input('longevity','Longevity (only if reliable)',p.longevity) %><%- f.input('projection','Projection (only if reliable)',p.projection) %>
+</div></div>
+<%- f.textarea('description','Description',p.description,{rows:5,maxlength:5000,help:'Only write facts you can verify. Do not invent notes or claims.'}) %>
+<%- f.textarea('authenticity_info','Sourcing / authenticity information (shown to customers)',p.authenticity_info,{rows:2,help:'Fill in only if you can prove it, e.g. “Supplied by [authorised distributor]”. Leave empty otherwise.'}) %>
+<div class="grid-2"><%- f.input('seo_title','Search-engine title (optional)',p.seo_title,{maxlength:70}) %><%- f.input('seo_description','Search-engine description (optional)',p.seo_description,{maxlength:170}) %></div>
+<% if (isNew) { %><h3 style="margin-top:1.2rem">Photos (optional – you can also add them after saving)</h3>
+<div class="photo-add">
+<label>Upload photo files<br><input type="file" name="images" accept="image/jpeg,image/png,image/webp" multiple></label>
+<label>…or paste image web addresses (one per line)<br><textarea name="imageUrls" rows="3" placeholder="https://example.com/photo.jpg" style="width:100%"></textarea></label>
+<input name="alt" placeholder="Describe the photo (for accessibility)" style="width:100%">
+<p class="small">JPEG, PNG or WebP, up to 5 MB each. Web addresses must be https:// links straight to the image file. Only use photos you own or have permission to use.</p></div><% } %>
+<button class="btn btn-gold" type="submit">Save product</button>
+</form>
+<% if (!isNew) { %>
+<div class="box" id="sizes"><h2>Sizes, prices &amp; stock</h2>
+<p class="small">Each size has its own price and stock. Prices are in cedis. Stock changes after the first save are done in <a href="/admin/inventory">Inventory</a> so every change is recorded.</p>
+<table class="table"><thead><tr><th>Size</th><th>SKU</th><th>Price</th><th>Discount price</th><th>Cost</th><th>Low-stock alert</th><th>On hand</th><th>Active</th><th></th><th></th></tr></thead><tbody>
+<% p.variants.forEach(v => { const fid = 'vf' + v.id; %><tr>
+<td><form id="<%= fid %>" method="post" action="/admin/products/<%= p.id %>/variants/<%= v.id %>"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="label" value="<%= v.label %>"></form>
+<input form="<%= fid %>" name="size_ml" type="number" min="0" value="<%= v.size_ml %>" style="width:70px" aria-label="Size ml"> ml</td>
+<td><input form="<%= fid %>" name="sku" value="<%= v.sku %>" style="width:120px" aria-label="SKU"></td><td><input form="<%= fid %>" name="price" value="<%= fromPesewas(v.price) %>" style="width:90px" inputmode="decimal" aria-label="Price"></td>
+<td><input form="<%= fid %>" name="discount_price" value="<%= v.discount_price === null ? '' : fromPesewas(v.discount_price) %>" style="width:90px" inputmode="decimal" aria-label="Discount price"></td>
+<td><input form="<%= fid %>" name="cost" value="<%= fromPesewas(v.cost) %>" style="width:90px" inputmode="decimal" aria-label="Cost" title="Average cost. Changes automatically when you receive stock."></td>
+<td><input form="<%= fid %>" name="low_stock_threshold" type="number" min="0" value="<%= v.low_stock_threshold %>" style="width:60px" aria-label="Low stock alert"></td>
+<td><%= v.on_hand %><%= v.reserved ? ' (' + v.reserved + ' held)' : '' %></td><td><input form="<%= fid %>" type="checkbox" name="active" value="1" <%= v.active ? 'checked' : '' %> aria-label="Active"></td>
+<td><button form="<%= fid %>" class="btn btn-small" type="submit">Save</button></td>
+<td><form method="post" action="/admin/products/<%= p.id %>/variants/<%= v.id %>/delete" data-confirm="Remove this size?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="link" type="submit">Remove</button></form></td></tr><% }) %>
+<% if (!p.variants.length) { %><tr><td colspan="11">No sizes yet. Add one below.</td></tr><% } %></tbody></table>
+<h3 style="margin-top:1.2rem">Add a size</h3>
+<form method="post" action="/admin/products/<%= p.id %>/variants" class="inline-form"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+<input name="size_ml" type="number" min="0" placeholder="Size (ml)" required style="width:100px"><input name="price" placeholder="Price e.g. 450.00" required inputmode="decimal"><input name="discount_price" placeholder="Discount price (optional)" inputmode="decimal">
+<input name="cost" placeholder="Cost per bottle" inputmode="decimal"><input name="opening_qty" type="number" min="0" placeholder="Stock you have now" style="width:140px"><input name="sku" placeholder="SKU (optional)"><button class="btn" type="submit">Add size</button></form>
+<p class="small">“Cost” is what you paid per bottle. It is used for profit reports. Use size 0 and a label like “Gift set” by typing 0 for items without a size.</p></div>
+
+<div class="box" id="photos"><h2>Photos</h2>
+<form method="post" action="/admin/products/<%= p.id %>/images?_csrf=<%= csrfToken %>" enctype="multipart/form-data" class="inline-form">
+<div class="photo-add">
+<label>Upload photo files<br><input type="file" name="images" accept="image/jpeg,image/png,image/webp" multiple></label>
+<label>…or paste image web addresses (one per line)<br><textarea name="imageUrls" rows="3" placeholder="https://example.com/photo.jpg" style="width:100%"></textarea></label>
+<input name="alt" placeholder="Describe the photo (for accessibility)" style="width:100%"><button class="btn" type="submit">Add photos</button></div></form>
+<p class="small">JPEG, PNG or WebP, up to 5 MB each. Web addresses must be https:// links straight to the image file. Only use photos you own or have permission to use. The first photo is the main one.</p>
+<div class="photo-grid"><% p.images.forEach(i => { %><div class="photo"><img src="<%= i.thumb_path %>" alt="<%= i.alt %>">
+<form method="post" action="/admin/products/<%= p.id %>/images/<%= i.id %>/alt" class="inline-form"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input name="alt" value="<%= i.alt %>" style="width:100%" aria-label="Alt text"></form>
+<form method="post" action="/admin/products/<%= p.id %>/images/<%= i.id %>/main" class="inline"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="link" type="submit">Make main</button></form> ·
+<form method="post" action="/admin/products/<%= p.id %>/images/<%= i.id %>/delete" class="inline" data-confirm="Delete this photo?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="link" type="submit">Delete</button></form></div><% }) %></div></div>
+
+<div class="box"><h2>Other actions</h2><div class="actions">
+<form method="post" action="/admin/products/<%= p.id %>/duplicate"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-ghost" type="submit">Duplicate as draft</button></form>
+<form method="post" action="/admin/products/<%= p.id %>/archive" data-confirm="Archive this product? It disappears from the shop but history is kept."><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-ghost" type="submit">Archive</button></form>
+<form method="post" action="/admin/products/<%= p.id %>/delete" data-confirm="Permanently delete this product? This cannot be undone."><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-danger" type="submit">Delete permanently</button></form></div>
+<p class="small">Products that already have orders cannot be deleted – archive them instead.</p></div>
+<% } %>

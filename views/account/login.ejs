@@ -1,0 +1,9 @@
+<div class="auth-card"><h1>Sign in</h1>
+<% if (error) { %><div class="alert alert-error" role="alert"><%= error %></div><% } %>
+<form method="post" action="/login" class="form">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <%- f.input('email', 'Email', email, {required:true, type:'email', autocomplete:'email'}) %>
+  <%- f.input('password', 'Password', '', {required:true, type:'password', autocomplete:'current-password'}) %>
+  <button class="btn btn-gold" type="submit">Sign in</button>
+</form>
+<p><a href="/forgot">Forgot your password?</a> · <a href="/register">Create an account</a></p></div>

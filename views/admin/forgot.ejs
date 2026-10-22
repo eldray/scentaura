@@ -1,0 +1,4 @@
+<div class="login-box"><h1>Reset password</h1>
+<% if (sent) { %><div class="alert alert-success">If that email belongs to a staff account, a reset link has been sent (valid for one hour). Email must be set up on the server for this to work.</div>
+<% } else { %><form method="post" action="/admin/forgot" class="form"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><%- f.input('email','Your staff email','',{required:true,type:'email'}) %><button class="btn btn-gold" type="submit">Send link</button></form><% } %>
+<p class="small"><a href="/admin/login">Back to sign in</a></p></div>

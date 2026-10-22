@@ -1,0 +1,10 @@
+<div class="admin-top"><h1>New purchase order</h1><a href="/admin/suppliers">← Back</a></div>
+<form method="post" action="/admin/suppliers/purchases" class="box"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+<div class="grid-2"><%- f.select('supplier_id','Supplier',[{value:'',label:'Choose…'}].concat(suppliers.map(s => ({value:s.id,label:s.name}))),supplierId,{required:true}) %>
+<%- f.input('supplier_invoice','Supplier invoice number (optional)','') %><%- f.input('order_date','Date',new Date().toISOString().slice(0,10),{type:'date'}) %><%- f.input('notes','Notes','') %></div>
+<table class="table"><thead><tr><th>Product &amp; size</th><th>Quantity</th><th>Cost per bottle (GHS)</th></tr></thead><tbody data-lines>
+<% for (let i = 0; i < 3; i++) { %><tr><td><select name="variant_id" data-variant-pick aria-label="Product"><option value="">—</option><% variants.forEach(v => { %><option value="<%= v.id %>" data-cost="<%= fromPesewas(v.cost) %>"><%= v.name %> – <%= v.label %> (<%= v.sku %>)</option><% }) %></select></td><td><input name="qty" type="number" min="1" style="width:90px" aria-label="Quantity"></td><td><input name="unit_cost" inputmode="decimal" data-cost-input style="width:120px" aria-label="Unit cost"></td></tr><% } %></tbody></table>
+<template data-line-template><tr><td><select name="variant_id" data-variant-pick aria-label="Product"><option value="">—</option><% variants.forEach(v => { %><option value="<%= v.id %>" data-cost="<%= fromPesewas(v.cost) %>"><%= v.name %> – <%= v.label %> (<%= v.sku %>)</option><% }) %></select></td><td><input name="qty" type="number" min="1" style="width:90px"></td><td><input name="unit_cost" inputmode="decimal" data-cost-input style="width:120px"></td></tr></template>
+<p><button type="button" class="btn btn-ghost btn-small" data-add-line>+ Add another line</button></p>
+<p class="small">Creating the order does not change stock. Stock is added when you press “Receive” after the goods arrive.</p>
+<button class="btn btn-gold" type="submit">Create purchase order</button></form>

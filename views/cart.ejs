@@ -1,0 +1,45 @@
+<h1>Your cart</h1>
+<% priced.errors.forEach(e => { %><div class="alert alert-info"><%= e.message %></div><% }) %>
+<% if (!priced.lines.length) { %>
+  <div class="notice center"><p>Your cart is empty.</p><a class="btn btn-gold" href="/shop">Start shopping</a></div>
+<% } else { %>
+<div class="cart-layout">
+  <div>
+    <% priced.lines.forEach(l => { %>
+    <div class="cart-line">
+      <a href="/product/<%= l.slug %>"><img src="<%= l.thumb || '/public/img/placeholder.svg' %>" alt="" width="90" height="90"></a>
+      <div class="cart-info">
+        <a href="/product/<%= l.slug %>"><strong><%= l.name %></strong></a>
+        <div class="small"><%= l.brand %> · <%= l.size %></div>
+        <div><%= ghs(l.unitPrice) %><% if (l.onSale) { %> <s class="dim"><%= ghs(l.listPrice) %></s><% } %></div>
+        <form method="post" action="/cart/remove" class="inline"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="variantId" value="<%= l.variantId %>"><button class="link" type="submit">Remove</button></form>
+      </div>
+      <form method="post" action="/cart/update" class="cart-qty">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="variantId" value="<%= l.variantId %>">
+        <label class="sr" for="q<%= l.variantId %>">Quantity</label>
+        <input id="q<%= l.variantId %>" type="number" name="qty" min="0" max="<%= Math.min(20, l.available) %>" value="<%= l.qty %>" inputmode="numeric">
+        <button class="btn btn-small" type="submit">Update</button>
+      </form>
+      <div class="cart-total"><%= ghs(l.lineTotal) %></div>
+    </div>
+    <% }) %>
+  </div>
+  <aside class="summary">
+    <h2>Order summary</h2>
+    <form method="post" action="/cart/coupon" class="coupon">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label for="code">Discount code</label>
+      <div class="row2"><input id="code" name="code" value="<%= priced.coupon ? priced.coupon.code : '' %>" maxlength="40" autocomplete="off"><button class="btn btn-small" type="submit">Apply</button></div>
+      <% if (priced.coupon) { %><p class="small ok">Code applied. Leave the box empty and press Apply to remove it.</p><% } %>
+    </form>
+    <dl class="totals">
+      <dt>Subtotal</dt><dd><%= ghs(priced.subtotal) %></dd>
+      <% if (priced.discount) { %><dt>Discount</dt><dd>-<%= ghs(priced.discount) %></dd><% } %>
+      <dt>Delivery</dt><dd class="dim">Chosen at checkout</dd>
+      <dt class="grand">Total before delivery</dt><dd class="grand"><%= ghs(priced.subtotal - priced.discount) %></dd>
+    </dl>
+    <a class="btn btn-gold btn-block" href="/checkout">Go to checkout</a>
+    <p class="small center">You do not need an account to check out.</p>
+  </aside>
+</div>
+<% } %>

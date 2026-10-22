@@ -1,0 +1,35 @@
+<h1>Review your order</h1>
+<div class="cart-layout">
+  <div>
+    <section class="panel">
+      <h2 class="h3">Items</h2>
+      <% priced.lines.forEach(l => { %><div class="mini-line"><span><%= l.qty %> × <%= l.name %> <small>(<%= l.size %>)</small></span><span><%= ghs(l.lineTotal) %></span></div><% }) %>
+    </section>
+    <section class="panel">
+      <h2 class="h3">Contact</h2>
+      <p><%= draft.name %><br><%= draft.phone %><br><%= draft.email %></p>
+      <h2 class="h3">Delivery</h2>
+      <p><strong><%= priced.rate.zone_name %> – <%= priced.rate.name %></strong><% if (priced.rate.eta_text) { %> (<%= priced.rate.eta_text %>)<% } %></p>
+      <% if (priced.rate.method === 'pickup') { %><p><%= priced.rate.instructions || 'You will collect your order from us.' %></p>
+      <% } else { %><p><%= draft.line1 %><br><%= draft.town %>, <%= draft.region %><% if (draft.digitalAddress) { %><br><%= draft.digitalAddress %><% } %></p><% } %>
+      <% if (draft.notes) { %><p class="small">Note: <%= draft.notes %></p><% } %>
+      <h2 class="h3">Payment</h2>
+      <p><%= (payOptions.find(o => o.value === draft.paymentMethod) || {}).label %></p>
+      <p><a href="/checkout">&larr; Change details</a></p>
+    </section>
+  </div>
+  <aside class="summary">
+    <h2>Total to pay</h2>
+    <dl class="totals">
+      <dt>Subtotal</dt><dd><%= ghs(priced.subtotal) %></dd>
+      <% if (priced.discount) { %><dt>Discount</dt><dd>-<%= ghs(priced.discount) %></dd><% } %>
+      <dt>Delivery</dt><dd><%= priced.deliveryFee ? ghs(priced.deliveryFee) : 'Free' %></dd>
+      <dt class="grand">Total</dt><dd class="grand"><%= ghs(priced.total) %></dd>
+    </dl>
+    <form method="post" action="/checkout/confirm">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button class="btn btn-gold btn-block" type="submit"><%= draft.paymentMethod === 'paystack' ? 'Confirm and pay ' + ghs(priced.total) : 'Confirm order' %></button>
+    </form>
+    <p class="small center">By confirming you agree to our <a href="/terms">terms</a> and <a href="/delivery-returns">delivery &amp; returns</a> policy.</p>
+  </aside>
+</div>

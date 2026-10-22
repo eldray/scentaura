@@ -1,0 +1,36 @@
+{
+  "name": "scentaura",
+  "version": "1.0.0",
+  "description": "ScentAura \u2013 perfume e-commerce store for Ghana",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning src/server.js",
+    "dev": "node --disable-warning=ExperimentalWarning --watch src/server.js",
+    "migrate": "node -e \"require('./src/db').get(); console.log('Database is up to date.')\"",
+    "create-admin": "node --disable-warning=ExperimentalWarning src/scripts/create-admin.js",
+    "seed:demo": "node --disable-warning=ExperimentalWarning src/scripts/seed-demo.js",
+    "clear:demo": "node --disable-warning=ExperimentalWarning src/scripts/seed-demo.js --clear",
+    "backup": "node --disable-warning=ExperimentalWarning src/scripts/backup.js",
+    "test": "node --test tests/*.test.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^18.0.8",
+    "ejs": "^7.0.2",
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.1",
+    "express-session": "^1.19.0",
+    "helmet": "^8.3.0",
+    "multer": "^2.4.0",
+    "nodemailer": "^10.1.7",
+    "sharp": "^0.35.5"
+  },
+  "private": true,
+  "engines": {
+    "node": ">=22.13"
+  }
+}

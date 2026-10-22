@@ -1,0 +1,7 @@
+<article class="narrow prose">
+  <nav class="crumbs"><a href="/blog">Guides</a> / <span><%= post.title %></span></nav>
+  <h1><%= post.title %></h1>
+  <% paragraphs(post.body).forEach(t => { %><p><%= t %></p><% }) %>
+  <p class="share">Share: <a href="<%= share.whatsapp %>" target="_blank" rel="noopener">WhatsApp</a> · <a href="<%= share.facebook %>" target="_blank" rel="noopener">Facebook</a></p>
+  <p><a class="btn btn-gold" href="/shop">Shop fragrances</a></p>
+</article>

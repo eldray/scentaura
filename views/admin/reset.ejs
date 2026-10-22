@@ -1,0 +1,6 @@
+<div class="login-box"><h1>New password</h1>
+<% if (!valid) { %><div class="alert alert-error">This link is invalid or expired.</div><% } else { %>
+<% if (error) { %><div class="alert alert-error"><%= error %></div><% } %>
+<form method="post" action="/admin/reset/<%= token %>" class="form"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+<%- f.input('password','New password (10+ characters)','',{required:true,type:'password',autocomplete:'new-password'}) %>
+<%- f.input('password2','Repeat','',{required:true,type:'password',autocomplete:'new-password'}) %><button class="btn btn-gold" type="submit">Save</button></form><% } %></div>

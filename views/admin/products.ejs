@@ -1,0 +1,10 @@
+<div class="admin-top"><h1>Products</h1><a class="btn btn-gold" href="/admin/products/new">+ Add product</a></div>
+<% if (demoCount) { %><div class="alert alert-info"><%= demoCount %> demo product(s) are in the shop. Remove them before launch with <code>npm run clear:demo</code> (or archive/delete them below).</div><% } %>
+<form class="filter-bar" method="get"><div class="field"><label for="q">Search</label><input id="q" name="q" value="<%= q %>" placeholder="Name, brand or SKU"></div>
+<div class="field"><label for="st">Status</label><select id="st" name="status"><option value="">All (not archived)</option><% STATUSES.forEach(s => { %><option <%= status === s ? 'selected' : '' %>><%= s %></option><% }) %></select></div><button class="btn btn-small" type="submit">Filter</button></form>
+<div class="box"><table class="table"><thead><tr><th></th><th>Product</th><th>Status</th><th>Sizes</th><th class="num">From</th><th class="num">On hand</th><th></th></tr></thead><tbody>
+<% rows.forEach(r => { %><tr><td><img src="<%= r.thumb || '/public/img/placeholder.svg' %>" width="44" height="44" alt="" style="border-radius:6px"></td>
+<td><a href="/admin/products/<%= r.id %>/edit"><strong><%= r.name %></strong></a><br><small><%= r.brand || '' %><%= r.is_demo ? ' · DEMO' : '' %></small></td>
+<td><span class="pill <%= r.status === 'active' ? 'pill-ok' : r.status === 'draft' ? 'pill-warn' : '' %>"><%= r.status %></span></td><td><%= r.variants %></td><td class="num"><%= r.min_price === null ? '–' : ghs(r.min_price) %></td><td class="num"><%= r.on_hand %><%= r.reserved ? ' (' + r.reserved + ' held)' : '' %></td>
+<td><a href="/admin/products/<%= r.id %>/edit">Edit</a></td></tr><% }) %>
+<% if (!rows.length) { %><tr><td colspan="7">No products yet. Click “Add product”.</td></tr><% } %></tbody></table></div>

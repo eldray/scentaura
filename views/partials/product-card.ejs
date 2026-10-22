@@ -1,0 +1,20 @@
+<article class="card">
+  <a class="card-img" href="/product/<%= p.slug %>" tabindex="-1" aria-hidden="true">
+    <img src="<%= p.thumb || '/public/img/placeholder.svg' %>" alt="" loading="lazy" width="400" height="400">
+    <% if (p.sale_variants > 0) { %><span class="tag tag-sale">Offer</span><% } else if (p.is_new) { %><span class="tag">New</span><% } else if (p.is_bestseller) { %><span class="tag">Best seller</span><% } %>
+    <% if (p.stock <= 0) { %><span class="tag tag-out">Sold out</span><% } %>
+  </a>
+  <div class="card-body">
+    <% if (p.brand_name) { %><p class="card-brand"><%= p.brand_name %></p><% } %>
+    <h3 class="card-title"><a href="/product/<%= p.slug %>"><%= p.name %></a></h3>
+    <p class="card-meta"><%= [p.concentration, p.audience === 'men' ? 'For men' : p.audience === 'women' ? 'For women' : 'Unisex'].filter(Boolean).join(' · ') %></p>
+    <p class="price">
+      <% if (p.min_price !== null) { %>From <strong><%= ghs(p.min_price) %></strong><% if (p.compare_price && p.compare_price > p.min_price) { %> <s><%= ghs(p.compare_price) %></s><% } %><% } %>
+    </p>
+    <% if (p.rating_count > 0) { %><p class="stars" aria-label="Rated <%= p.rating %> out of 5"><%= '★'.repeat(Math.round(p.rating)) %><span class="dim"><%= '★'.repeat(5 - Math.round(p.rating)) %></span> <small>(<%= p.rating_count %>)</small></p><% } %>
+    <% if (p.stock > 0 && p.variant_count === 1 && p.quick_variant_id) { %>
+      <form method="post" action="/cart/add"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="variantId" value="<%= p.quick_variant_id %>"><input type="hidden" name="qty" value="1"><input type="hidden" name="back" value="<%= currentPath || '/' %>"><button class="btn btn-block btn-card" type="submit">Add to cart</button></form>
+    <% } else if (p.stock > 0) { %><a class="btn btn-block btn-card" href="/product/<%= p.slug %>">Choose size</a>
+    <% } else { %><a class="btn btn-block btn-card btn-ghost" href="/product/<%= p.slug %>">View</a><% } %>
+  </div>
+</article>

@@ -1,0 +1,39 @@
+<section class="hero<%= S.hero_image ? '' : ' hero-default' %>" <% if (S.hero_image) { %>style="background-image:linear-gradient(90deg,rgba(0,0,0,.72),rgba(0,0,0,.25)),url('<%= S.hero_image %>')"<% } %>>
+  <div class="hero-text">
+    <h1><%= S.hero_title %></h1>
+    <p><%= S.hero_subtitle %></p>
+    <a class="btn btn-gold" href="/shop">Shop now</a>
+  </div>
+</section>
+
+<%- include('partials/trust', { cls: 'trust' }) %>
+
+<section>
+  <h2 class="section-title">Popular categories</h2>
+  <div class="cat-grid">
+    <a class="cat cat-women" href="/women"><span class="cat-img"></span><span class="cat-label">Women</span></a>
+    <a class="cat cat-men" href="/men"><span class="cat-img"></span><span class="cat-label">Men</span></a>
+    <a class="cat cat-unisex" href="/unisex"><span class="cat-img"></span><span class="cat-label">Unisex</span></a>
+    <a class="cat cat-new" href="/new-arrivals"><span class="cat-img"></span><span class="cat-label">New arrivals</span></a>
+    <a class="cat cat-best" href="/best-sellers"><span class="cat-img"></span><span class="cat-label">Best sellers</span></a>
+  </div>
+</section>
+
+<% const seen = new Set(); const popular = [...featured, ...best, ...newest, ...fallback].filter(p => !seen.has(p.id) && seen.add(p.id)).slice(0, 8); %>
+<% if (popular.length) { %>
+<section>
+  <div class="section-head"><h2 class="section-title">Popular products</h2><a href="/shop">View all &rarr;</a></div>
+  <div class="grid"><% popular.forEach(p => { %><%- include('partials/product-card', { p }) %><% }) %></div>
+</section>
+<% } %>
+
+<% if (!featured.length && !newest.length && !best.length && !fallback.length) { %>
+<section class="notice"><h2>Our collection is on its way</h2><p>We are getting the shelves ready. Please check back soon<% if (waLink()) { %> or <a href="<%= waLink() %>">message us on WhatsApp</a><% } %>.</p></section>
+<% } %>
+
+<% if (posts.length) { %>
+<section>
+  <div class="section-head"><h2 class="section-title">Fragrance guides</h2><a href="/blog">All guides &rarr;</a></div>
+  <div class="grid grid-3"><% posts.forEach(po => { %><a class="post-tile" href="/blog/<%= po.slug %>"><span class="post-top" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M16 5h8v5h-8zM14 10h12v4H14zM11 14h18a3 3 0 0 1 3 3v15a3 3 0 0 1-3 3H11a3 3 0 0 1-3-3V17a3 3 0 0 1 3-3z"/></svg></span><span class="post-body"><h3><%= po.title %></h3><span class="post-ex"><%= po.excerpt %></span><span class="post-more">Read guide &rarr;</span></span></a><% }) %></div>
+</section>
+<% } %>

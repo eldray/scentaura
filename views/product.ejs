@@ -1,0 +1,85 @@
+<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> / <a href="/shop">Shop</a> / <span><%= p.name %></span></nav>
+<div class="product">
+  <div class="gallery">
+    <img id="main-img" class="main-img" src="<%= p.images[0] ? p.images[0].path : '/public/img/placeholder.svg' %>" alt="<%= p.images[0] ? p.images[0].alt || p.name : p.name %>" width="800" height="800">
+    <% if (p.images.length > 1) { %>
+    <div class="thumbs">
+      <% p.images.forEach((im, i) => { %><button type="button" class="thumb" data-full="<%= im.path %>" data-alt="<%= im.alt || p.name %>" aria-label="Show photo <%= i + 1 %>"><img src="<%= im.thumb_path %>" alt="" width="80" height="80" loading="lazy"></button><% }) %>
+    </div>
+    <% } %>
+  </div>
+
+  <div class="info">
+    <% if (p.brand_name) { %><p class="card-brand"><%= p.brand_name %></p><% } %>
+    <h1><%= p.name %></h1>
+    <p class="card-meta"><%= [p.concentration, p.audience === 'men' ? 'For men' : p.audience === 'women' ? 'For women' : 'Unisex', p.fragrance_family].filter(Boolean).join(' · ') %></p>
+    <% if (p.rating_count > 0) { %><p class="stars"><%= '★'.repeat(Math.round(p.rating)) %><span class="dim"><%= '★'.repeat(5 - Math.round(p.rating)) %></span> <a href="#reviews"><%= p.rating %> (<%= p.rating_count %> review<%= p.rating_count > 1 ? 's' : '' %>)</a></p><% } %>
+
+    <% if (sellable) { %>
+    <form method="post" action="/cart/add" class="buy">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" name="back" value="/product/<%= p.slug %>">
+      <fieldset class="sizes">
+        <legend>Choose a size</legend>
+        <% let firstFree = true; p.variants.forEach(v => { const avail = v.on_hand - v.reserved; const eff = (v.discount_price !== null && v.discount_price < v.price) ? v.discount_price : v.price; %>
+        <label class="size <%= avail <= 0 ? 'size-out' : '' %>">
+          <input type="radio" name="variantId" value="<%= v.id %>" <%= avail <= 0 ? 'disabled' : '' %> <%= avail > 0 && firstFree ? 'checked' : '' %> required>
+          <span class="size-label"><%= v.label %></span>
+          <span class="size-price"><%= ghs(eff) %><% if (eff < v.price) { %> <s><%= ghs(v.price) %></s><% } %></span>
+          <span class="size-stock"><%= avail <= 0 ? 'Sold out' : avail <= v.low_stock_threshold ? 'Only ' + avail + ' left' : 'In stock' %></span>
+        </label>
+        <% if (avail > 0) firstFree = false; }) %>
+      </fieldset>
+      <div class="qty-row">
+        <label for="qty">Quantity</label>
+        <input id="qty" name="qty" type="number" min="1" max="20" value="1" inputmode="numeric">
+      </div>
+      <div class="actions">
+        <button class="btn btn-gold" type="submit">Add to cart</button>
+        <button class="btn" type="submit" name="buyNow" value="1">Buy now</button>
+      </div>
+    </form>
+    <% } else { %>
+      <p class="notice">This fragrance is currently sold out.<% if (waUrl) { %> <a href="<%= waUrl %>">Ask us when it will be back</a>.<% } %></p>
+    <% } %>
+
+    <div class="aux">
+      <% if (customer) { %>
+      <form method="post" action="/wishlist/toggle" class="inline"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="productId" value="<%= p.id %>"><input type="hidden" name="back" value="/product/<%= p.slug %>">
+        <button class="btn btn-ghost" type="submit"><%= inWishlist ? '♥ Saved to wishlist' : '♡ Save to wishlist' %></button></form>
+      <% } else { %><a class="btn btn-ghost" href="/login">♡ Sign in to save</a><% } %>
+      <% if (waUrl) { %><a class="btn btn-ghost" href="<%= waUrl %>" target="_blank" rel="noopener">Ask on WhatsApp</a><% } %>
+    </div>
+
+    <p class="small">Delivery across Ghana. Delivery fee and time are shown at checkout. <a href="/delivery-returns">Delivery &amp; returns</a></p>
+
+    <% if (p.description) { %><h2 class="h3">About this fragrance</h2><% paragraphs(p.description).forEach(t => { %><p><%= t %></p><% }) %><% } %>
+
+    <% const rows = [['Top notes', p.top_notes], ['Middle notes', p.middle_notes], ['Base notes', p.base_notes], ['Fragrance family', p.fragrance_family], ['Concentration', p.concentration], ['Longevity', p.longevity], ['Projection', p.projection]].filter(r => r[1]); %>
+    <% if (rows.length) { %><table class="specs"><tbody><% rows.forEach(r => { %><tr><th scope="row"><%= r[0] %></th><td><%= r[1] %></td></tr><% }) %></tbody></table><% } %>
+    <% if (p.authenticity_info) { %><div class="notice"><strong>Sourcing:</strong> <%= p.authenticity_info %></div><% } %>
+
+    <p class="share">Share: <a href="<%= share.whatsapp %>" target="_blank" rel="noopener">WhatsApp</a> · <a href="<%= share.facebook %>" target="_blank" rel="noopener">Facebook</a></p>
+  </div>
+</div>
+
+<section id="reviews" class="reviews">
+  <h2>Customer reviews</h2>
+  <% if (p.reviews.length) { p.reviews.forEach(r => { %>
+    <article class="review"><p class="stars"><%= '★'.repeat(r.rating) %><span class="dim"><%= '★'.repeat(5 - r.rating) %></span></p><p><%= r.body %></p><p class="small">— <%= r.author_name %>, verified buyer</p></article>
+  <% }) } else { %><p>No reviews yet.</p><% } %>
+  <% if (canReview && !hasReviewed) { %>
+  <form method="post" action="/product/<%= p.slug %>/review" class="form narrow-form">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <h3>Write a review</h3>
+    <%- f.select('rating', 'Your rating', [{value:'',label:'Choose…'},{value:5,label:'5 – Excellent'},{value:4,label:'4 – Good'},{value:3,label:'3 – OK'},{value:2,label:'2 – Poor'},{value:1,label:'1 – Bad'}], '', {required:true}) %>
+    <%- f.textarea('body', 'Your review', '', {required:true, rows:4, maxlength:1000}) %>
+    <button class="btn" type="submit">Send review</button>
+    <p class="small">Reviews appear after we have checked them.</p>
+  </form>
+  <% } else if (customer && !hasReviewed) { %><p class="small">Only customers who have received this product can review it.</p><% } %>
+</section>
+
+<% if (related.length) { %>
+<section><h2 class="section-title">You may also like</h2><div class="grid"><% related.forEach(r => { %><%- include('partials/product-card', { p: r }) %><% }) %></div></section>
+<% } %>

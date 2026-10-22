@@ -1,0 +1,9 @@
+<% if (result.pages > 1) {
+  const qs = Object.assign({}, query); delete qs.page;
+  const base = (n) => { const p = new URLSearchParams(); Object.keys(qs).forEach(k => [].concat(qs[k]).forEach(v => p.append(k, v))); p.set('page', n); return pathName + '?' + p.toString(); }; %>
+<nav class="pagination" aria-label="Pages">
+  <% if (result.page > 1) { %><a href="<%= base(result.page - 1) %>" rel="prev">&laquo; Previous</a><% } %>
+  <span>Page <%= result.page %> of <%= result.pages %></span>
+  <% if (result.page < result.pages) { %><a href="<%= base(result.page + 1) %>" rel="next">Next &raquo;</a><% } %>
+</nav>
+<% } %>
