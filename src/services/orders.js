@@ -48,7 +48,7 @@ function createOrder(db, input) {
   if (name.length < 2) errs.push('Please enter your full name.');
   if (!util.isEmail(email)) errs.push('Please enter a valid email address.');
   if (!phone) errs.push('Please enter a valid Ghana phone number, for example 024 123 4567 or +233 24 123 4567.');
-  if (!['paystack', 'cod'].includes(input.paymentMethod)) errs.push('Please choose a payment method.');
+  if (!['momo', 'paystack', 'cod'].includes(input.paymentMethod)) errs.push('Please choose a payment method.');
   if (input.paymentMethod === 'cod' && settings.get('cod_enabled', '0', db) !== '1') errs.push('Pay on delivery is not available.');
 
   const priced = pricing.priceCart(db, input.items, { rateId: input.rateId, couponCode: input.couponCode, email, phone, customerId: input.customerId });
@@ -70,7 +70,7 @@ function createOrder(db, input) {
     let orderNo, tries = 0;
     do { orderNo = util.orderNumber(); tries++; } while (getOrderByNo(db, orderNo) && tries < 5);
 
-    const online = input.paymentMethod === 'paystack';
+    const online = input.paymentMethod !== 'cod';
     const info = db.prepare(`INSERT INTO orders
       (order_no, tracking_token, customer_id, customer_name, customer_email, customer_phone,
        ship_line1, ship_town, ship_region, ship_digital_address, delivery_notes,
@@ -126,7 +126,7 @@ function setStatus(db, orderId, to, opts = {}) {
     if (!(NEXT[o.status] || []).includes(to)) throw new OrderError(`An order that is "${util.ORDER_STATUSES[o.status]}" cannot be changed to "${util.ORDER_STATUSES[to]}".`);
 
     const gate = ['processing', 'packed', 'dispatched', 'out_for_delivery', 'delivered'];
-    if (o.payment_method === 'paystack' && o.payment_status !== 'paid' && gate.includes(to)) {
+    if (o.payment_method !== 'cod' && o.payment_status !== 'paid' && gate.includes(to)) {
       throw new OrderError('This order has not been paid yet, so it cannot be processed or shipped.');
     }
 
@@ -163,7 +163,7 @@ function setStatus(db, orderId, to, opts = {}) {
 function expireStaleOrders(db, now = new Date()) {
   const minutes = parseInt(settings.get('reservation_minutes', '120', db), 10) || 120;
   const cutoff = new Date(now.getTime() - minutes * 60000).toISOString().slice(0, 19).replace('T', ' ');
-  const stale = db.prepare(`SELECT id FROM orders WHERE payment_method = 'paystack' AND status = 'payment_pending'
+  const stale = db.prepare(`SELECT id FROM orders WHERE payment_method != 'cod' AND status = 'payment_pending'
     AND payment_status IN ('unpaid','pending','failed','cancelled') AND created_at < ?`).all(cutoff);
   let n = 0;
   for (const s of stale) {

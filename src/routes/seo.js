@@ -5,6 +5,8 @@ const db = req => req.app.locals.db;
 
 function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
+router.get('/favicon.ico', (req, res) => res.redirect(301, res.locals.S.logo_path || '/public/img/favicon.svg'));
+
 router.get('/robots.txt', (req, res) => {
   res.type('text/plain').send(`User-agent: *\nDisallow: /admin\nDisallow: /cart\nDisallow: /checkout\nDisallow: /account\nDisallow: /order/\nDisallow: /search\nAllow: /\n\nSitemap: ${res.locals.baseUrl}/sitemap.xml\n`);
 });

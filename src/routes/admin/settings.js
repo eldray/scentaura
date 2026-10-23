@@ -14,7 +14,7 @@ const TEXT_KEYS = ['business_name', 'tagline', 'hero_title', 'hero_subtitle', 'a
 router.get('/', (req, res) => {
   res.admin('settings', {
     pageTitle: 'Settings',
-    system: { paystack: config.paystackEnabled(), paystackTest: /^sk_test_/.test(config.paystack.secretKey), smtp: !!config.smtp.host, baseUrl: config.baseUrl, prod: config.isProd }
+    system: { momo: config.momoEnabled(), momoEnv: config.momo.env, paystack: config.paystackEnabled(), paystackTest: /^sk_test_/.test(config.paystack.secretKey), smtp: !!config.smtp.host, baseUrl: config.baseUrl, prod: config.isProd }
   });
 });
 

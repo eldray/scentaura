@@ -240,3 +240,41 @@ test('security headers, no stack traces, no admin indexing', async () => {
     const nf = await c.get('/does/not/exist'); assert.equal(nf.status, 404); assert.ok(!/node_modules|at Object/.test(nf.text));
   } finally { server.close(); }
 });
+
+test('Mobile Money journey: pay → approve on phone → page polls → paid; callback cannot fake a payment', async () => {
+  const { db, server, base, a, rate } = await boot();
+  const momo = require('../src/services/momo');
+  try {
+    let status = 'PENDING', amount = '0';
+    momo.resetToken();
+    momo.client.request = async (m, p) => {
+      if (p === '/collection/token/') return { status: 200, json: { access_token: 't', expires_in: 3600 } };
+      if (m === 'POST') return { status: 202, json: null };
+      return { status: 200, json: { status, amount, currency: 'EUR', financialTransactionId: '9' } };
+    };
+    const c = new Client(base);
+    await c.post('/cart/add', { variantId: a, qty: 1, back: '/shop' }, '/product/noir');
+    const co = await c.get('/checkout'); assert.match(co.text, /Pay with MTN Mobile Money/); assert.match(co.text, /name="momoPhone"/);
+    const bad = await c.post('/checkout/review', { name: 'Ama', email: 'ama@example.com', phone: '0241234567', rateId: rate, line1: '1 Road', town: 'Accra', region: 'Greater Accra', paymentMethod: 'momo', momoPhone: '999' }, '/checkout');
+    assert.match(bad.text, /Mobile Money number/);
+    const ok = await c.post('/checkout/review', { name: 'Ama', email: 'ama@example.com', phone: '0241234567', rateId: rate, line1: '1 Road', town: 'Accra', region: 'Greater Accra', paymentMethod: 'momo', momoPhone: '020 111 2222' }, '/checkout');
+    assert.match(ok.text, /\+233201112222/);
+    const conf = await c.post('/checkout/confirm', {}, '/checkout');
+    assert.equal(conf.status, 302);
+    const o = db.prepare('SELECT * FROM orders').get(); amount = (o.total / 100).toFixed(2);
+    assert.equal(o.payment_method, 'momo'); assert.equal(o.payment_status, 'pending');
+    const page = await c.get(`/order/${o.order_no}?t=${o.tracking_token}`);
+    assert.match(page.text, /Approve the payment on your phone/); assert.match(page.text, /data-momo-poll/);
+    const poll = `/order/${o.order_no}/payment-status?t=${o.tracking_token}`;
+    assert.equal((await c.get(`/order/${o.order_no}/payment-status`)).status, 404);          // needs the secret link
+    assert.equal(JSON.parse((await c.get(poll)).text).status, 'pending');
+    // a forged callback does nothing while MTN says PENDING
+    const ref = db.prepare('SELECT reference FROM payments').get().reference;
+    const cb = await c.req('POST', `/webhooks/momo/${ref}`, { body: JSON.stringify({ status: 'SUCCESSFUL' }), headers: { 'content-type': 'application/json' } });
+    assert.equal(cb.status, 200); assert.equal(db.prepare('SELECT payment_status FROM orders').get().payment_status, 'pending');
+    status = 'SUCCESSFUL';
+    assert.equal(JSON.parse((await c.get(poll)).text).status, 'success');
+    assert.equal(db.prepare('SELECT payment_status FROM orders').get().payment_status, 'paid');
+    assert.match((await c.get(`/order/${o.order_no}?t=${o.tracking_token}`)).text, /Payment received/);
+  } finally { server.close(); }
+});

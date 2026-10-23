@@ -1,6 +1,7 @@
 'use strict';
 process.env.NODE_ENV = 'test';
 process.env.PAYSTACK_SECRET_KEY = 'sk_test_unit_secret';
+process.env.MOMO_SUBSCRIPTION_KEY = 'sub-key'; process.env.MOMO_API_USER = '11111111-1111-4111-8111-111111111111'; process.env.MOMO_API_KEY = 'api-key'; process.env.MOMO_ENV = 'sandbox';
 const crypto = require('crypto');
 const dbm = require('../src/db');
 const catalog = require('../src/services/catalog');

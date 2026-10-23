@@ -4,6 +4,7 @@ const config = require('../config');
 const pricing = require('../services/pricing');
 const orders = require('../services/orders');
 const payments = require('../services/payments');
+const momo = require('../services/momo');
 const notify = require('../services/notify');
 const util = require('../lib/util');
 const router = express.Router();
@@ -14,6 +15,7 @@ const getCart = req => (Array.isArray(req.session.cart) ? req.session.cart : [])
 function paymentOptions(req) {
   const S = req.res.locals.S;
   const opts = [];
+  if (config.momoEnabled()) opts.push({ value: 'momo', label: 'Pay with MTN Mobile Money', hint: 'We send a payment request to your phone. Enter your MoMo PIN to approve it.' });
   if (config.paystackEnabled()) opts.push({ value: 'paystack', label: 'Pay online with Paystack', hint: 'Mobile Money, card or bank transfer – the options turned on for this store at Paystack.' });
   if (S.cod_enabled === '1') opts.push({ value: 'cod', label: S.cod_label || 'Pay on delivery / pickup', hint: 'Pay when your order arrives or when you collect it.' });
   return opts;
@@ -23,7 +25,7 @@ function draftFrom(body) {
   return {
     name: util.clean(body.name, 120), email: util.clean(body.email, 254).toLowerCase(), phone: util.clean(body.phone, 30),
     line1: util.clean(body.line1, 200), town: util.clean(body.town, 100), region: util.clean(body.region, 60), digitalAddress: util.clean(body.digitalAddress, 20),
-    notes: util.clean(body.notes, 500), rateId: util.int(body.rateId) || null, paymentMethod: util.clean(body.paymentMethod, 10),
+    notes: util.clean(body.notes, 500), rateId: util.int(body.rateId) || null, paymentMethod: util.clean(body.paymentMethod, 10), momoPhone: util.clean(body.momoPhone, 30),
     marketingConsent: body.marketingConsent === '1'
   };
 }
@@ -59,6 +61,11 @@ router.post('/checkout/review', (req, res, next) => req.app.locals.limiters.chec
     if (!util.GH_REGIONS.includes(draft.region)) errors.push('Please choose your region.');
   }
   if (!paymentOptions(req).some(o => o.value === draft.paymentMethod)) errors.push('Please choose a payment method.');
+  if (draft.paymentMethod === 'momo') {
+    const mp = util.normalizeGhPhone(draft.momoPhone || draft.phone);
+    if (!mp) errors.push('Please enter the Mobile Money number to pay from, for example 024 123 4567.');
+    else draft.momoPhone = mp;
+  }
   req.session.checkoutDraft = draft;
   if (errors.length) return form(req, res, draft, errors);
   draft.phone = phone;
@@ -83,7 +90,15 @@ router.post('/checkout/confirm', (req, res, next) => req.app.locals.limiters.che
   }
   notify.orderPlaced(db(req), order);
 
-  if (order.payment_method === 'paystack') {
+  if (order.payment_method === 'momo') {
+    try {
+      await momo.initialize(db(req), order, draft.momoPhone || order.customer_phone);
+      res.flash('info', 'Check your phone and approve the payment with your MoMo PIN.');
+    } catch (e) {
+      console.error('MoMo request failed:', e.message);
+      res.flash('error', e instanceof orders.OrderError ? e.message : 'We could not send the payment request to your phone just now. Your order is saved – press “Pay now” to try again.');
+    }
+  } else if (order.payment_method === 'paystack') {
     try {
       const { url } = await payments.initialize(db(req), order, `${config.baseUrl}/payment/callback`);
       return res.redirect(303, url);
@@ -127,8 +142,9 @@ router.get('/order/:orderNo', (req, res) => {
     title: `Order ${o.order_no}`, noindex: true, o, items: orders.getItems(d, o.id), courier, rateInstructions: rate && rate.instructions,
     events: d.prepare("SELECT * FROM order_events WHERE order_id = ? AND kind IN ('status','delivery_attempt') ORDER BY id").all(o.id),
     trackUrl: courier && courier.tracking_url && o.tracking_no ? courier.tracking_url.replace('{tracking}', encodeURIComponent(o.tracking_no)) : null,
-    canPay: o.payment_method === 'paystack' && ['unpaid', 'pending', 'failed', 'cancelled'].includes(o.payment_status) && config.paystackEnabled() &&
+    canPay: ['paystack', 'momo'].includes(o.payment_method) && ['unpaid', 'pending', 'failed', 'cancelled'].includes(o.payment_status) && (o.payment_method === 'momo' ? config.momoEnabled() : config.paystackEnabled()) &&
       (o.status === 'payment_pending' || (o.status === 'cancelled' && d.prepare("SELECT 1 FROM order_events WHERE order_id = ? AND note LIKE '%not completed in time%'").get(o.id))),
+    momo: o.payment_method === 'momo' ? momo.latestAttempt(d, o.id) : null,
     waUrl: res.locals.waLink(`Hello, I have a question about my order ${o.order_no}.`)
   });
 });
@@ -139,8 +155,9 @@ router.post('/order/:orderNo/pay', (req, res, next) => req.app.locals.limiters.c
   const back = `/order/${o.order_no}?t=${o.tracking_token}`;
   // Check first whether an earlier attempt actually succeeded.
   const pend = db(req).prepare("SELECT reference FROM payments WHERE order_id = ? AND status = 'pending' ORDER BY id DESC LIMIT 1").get(o.id);
+  const verify = o.payment_method === 'momo' ? momo.verifyReference : payments.verifyReference;
   if (pend) {
-    const r = await payments.verifyReference(db(req), pend.reference);
+    const r = await verify(db(req), pend.reference);
     if (r.status === 'success') { res.flash('success', 'Your payment has been confirmed. Thank you!'); return res.redirect(back); }
   }
   let fresh = orders.getOrder(db(req), o.id);
@@ -156,6 +173,16 @@ router.post('/order/:orderNo/pay', (req, res, next) => req.app.locals.limiters.c
       fresh = orders.getOrder(db(req), o.id);
     } catch (e) { res.flash('error', 'Sorry, this order expired and the item is no longer available.'); return res.redirect(back); }
   }
+  if (fresh.payment_method === 'momo') {
+    try {
+      await momo.initialize(db(req), fresh, util.clean(req.body.momoPhone, 30) || fresh.customer_phone);
+      res.flash('info', 'Check your phone and approve the payment with your MoMo PIN.');
+    } catch (e) {
+      console.error('MoMo request failed:', e.message);
+      res.flash('error', e instanceof orders.OrderError ? e.message : 'We could not send the payment request. Please try again in a moment.');
+    }
+    return res.redirect(back);
+  }
   try {
     const { url } = await payments.initialize(db(req), fresh, `${config.baseUrl}/payment/callback`);
     res.redirect(303, url);
@@ -164,6 +191,17 @@ router.post('/order/:orderNo/pay', (req, res, next) => req.app.locals.limiters.c
     res.flash('error', 'We could not open the payment page. Please try again in a moment.');
     res.redirect(back);
   }
+});
+
+/* The order page asks this every few seconds while a Mobile Money approval is pending. */
+router.get('/order/:orderNo/payment-status', async (req, res) => {
+  const o = loadOrderForCustomer(req);
+  if (!o) return res.status(404).json({ status: 'unknown' });
+  if (o.payment_method !== 'momo' || o.payment_status === 'paid') return res.json({ status: o.payment_status === 'paid' ? 'success' : 'none' });
+  const a = momo.latestAttempt(db(req), o.id);
+  if (!a || a.status !== 'pending') return res.json({ status: a ? (a.status === 'success' ? 'success' : 'failed') : 'none', reason: a && a.failure_reason });
+  const r = await momo.verifyReference(db(req), a.reference);
+  res.json({ status: r.status, reason: r.reason || null });
 });
 
 router.get('/track', (req, res) => res.page('track', { title: 'Track your order', description: 'Check the status of your order.', canonical: `${res.locals.baseUrl}/track`, error: null }));

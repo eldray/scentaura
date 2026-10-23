@@ -2,7 +2,7 @@
 <% if (o.needs_attention) { %><div class="alert alert-error"><strong>Needs attention:</strong> <%= o.needs_attention %>
 <form method="post" action="/admin/orders/<%= o.id %>/clear-flag" class="inline"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="link" type="submit">Mark as handled</button></form></div><% } %>
 <div class="cards"><div class="stat"><div class="l">Status</div><div class="n" style="font-size:1.2rem"><%= ORDER_STATUSES[o.status] %></div></div>
-<div class="stat"><div class="l">Payment</div><div class="n" style="font-size:1.2rem"><%= o.payment_status %></div><div class="l"><%= o.payment_method === 'cod' ? 'Pay on delivery' : 'Paystack' %></div></div>
+<div class="stat"><div class="l">Payment</div><div class="n" style="font-size:1.2rem"><%= o.payment_status %></div><div class="l"><%= o.payment_method === 'cod' ? 'Pay on delivery' : (o.payment_method === 'momo' ? 'MTN Mobile Money' : 'Paystack') %></div></div>
 <div class="stat"><div class="l">Total</div><div class="n"><%= ghs(o.total) %></div></div><div class="stat"><div class="l">Stock</div><div class="n" style="font-size:1.2rem"><%= o.stock_state %></div></div></div>
 <div class="grid-2"><div>
 <div class="box"><h2>Items</h2><table class="table"><thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Price</th><th class="num">Total</th></tr></thead><tbody>
@@ -21,8 +21,8 @@
 <%- f.select('status','Move to',next.map(s => ({value:s,label:ORDER_STATUSES[s]})),next[0]) %><%- f.input('note','Note (optional)','',{maxlength:300}) %>
 <% if (['dispatched','out_for_delivery','delivered','return_requested'].includes(o.status)) { %><%- f.check('restock','If “Returned”: put the items back in stock (only if resaleable and sealed)',false,{value:'1'}) %><% } %>
 <button class="btn" type="submit">Update status</button></form><% } %>
-<% if (o.payment_method === 'paystack' && o.payment_status !== 'paid' && o.payment_status !== 'refunded' && o.status !== 'cancelled') { %>
-<form method="post" action="/admin/orders/<%= o.id %>/check-payment"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-ghost" type="submit">Check payment with Paystack</button></form><% } %>
+<% if (o.payment_method !== 'cod' && o.payment_status !== 'paid' && o.payment_status !== 'refunded' && o.status !== 'cancelled') { %>
+<form method="post" action="/admin/orders/<%= o.id %>/check-payment"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-ghost" type="submit">Check payment with <%= o.payment_method === 'momo' ? 'MTN' : 'Paystack' %></button></form><% } %>
 <% if (o.payment_method === 'cod' && o.payment_status !== 'paid' && o.status !== 'cancelled') { %>
 <form method="post" action="/admin/orders/<%= o.id %>/collect-cod" data-confirm="Confirm you have received <%= ghs(o.total) %> in cash/MoMo?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-gold" type="submit">Record cash collected (<%= ghs(o.total) %>)</button></form><% } %></div>
 <div class="box"><h2>Courier &amp; tracking</h2><form method="post" action="/admin/orders/<%= o.id %>/shipping" class="form"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
@@ -36,6 +36,6 @@
 <form method="post" action="/admin/orders/<%= o.id %>/refund" class="form" data-confirm="Send this refund? It cannot be undone."><input type="hidden" name="_csrf" value="<%= csrfToken %>">
 <%- f.input('amount','Refund amount (GHS)',fromPesewas(refundable),{required:true,inputmode:'decimal',help:'You can still refund up to ' + ghs(refundable)}) %>
 <%- f.input('reason','Reason','',{required:true}) %>
-<%- f.select('method','How',[{value:'paystack',label:'Back to the customer through Paystack'},{value:'manual',label:'I paid the customer myself (MoMo/cash) – just record it'}],o.payment_method === 'cod' ? 'manual' : 'paystack') %>
+<%- f.select('method','How',[{value:'paystack',label:'Back to the customer through Paystack'},{value:'manual',label:'I paid the customer myself (MoMo/cash) – just record it'}],o.payment_method === 'paystack' ? 'paystack' : 'manual') %>
 <button class="btn btn-danger" type="submit">Refund</button></form><% } %></div><% } %>
 </div></div>

@@ -14,7 +14,7 @@
       <% } else { %><p><%= draft.line1 %><br><%= draft.town %>, <%= draft.region %><% if (draft.digitalAddress) { %><br><%= draft.digitalAddress %><% } %></p><% } %>
       <% if (draft.notes) { %><p class="small">Note: <%= draft.notes %></p><% } %>
       <h2 class="h3">Payment</h2>
-      <p><%= (payOptions.find(o => o.value === draft.paymentMethod) || {}).label %></p>
+      <p><%= (payOptions.find(o => o.value === draft.paymentMethod) || {}).label %><% if (draft.paymentMethod === 'momo') { %><br>Request will be sent to <strong><%= draft.momoPhone %></strong><% } %></p>
       <p><a href="/checkout">&larr; Change details</a></p>
     </section>
   </div>
@@ -28,7 +28,7 @@
     </dl>
     <form method="post" action="/checkout/confirm">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <button class="btn btn-gold btn-block" type="submit"><%= draft.paymentMethod === 'paystack' ? 'Confirm and pay ' + ghs(priced.total) : 'Confirm order' %></button>
+      <button class="btn btn-gold btn-block" type="submit"><%= draft.paymentMethod !== 'cod' ? 'Confirm and pay ' + ghs(priced.total) : 'Confirm order' %></button>
     </form>
     <p class="small center">By confirming you agree to our <a href="/terms">terms</a> and <a href="/delivery-returns">delivery &amp; returns</a> policy.</p>
   </aside>

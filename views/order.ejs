@@ -11,10 +11,23 @@
   </span>
 </div>
 
-<% if (canPay) { %>
+<% if (o.payment_method === 'momo' && momo && momo.status === 'pending' && o.payment_status !== 'paid') { %>
+<section class="panel center momo-wait" data-momo-poll="/order/<%= o.order_no %>/payment-status?t=<%= o.tracking_token %>">
+  <h2 class="h3">Approve the payment on your phone</h2>
+  <p>We sent a request for <strong><%= ghs(o.total) %></strong> to <strong><%= momo.payer_phone %></strong>. Enter your MoMo PIN to approve. If you see no prompt, dial <strong>*170#</strong> and choose <em>My Approvals</em>.</p>
+  <p class="small" data-momo-msg>Waiting for your approval&hellip; this page updates by itself.</p>
+</section>
+<% } %>
+<% if (canPay && !(o.payment_method === 'momo' && momo && momo.status === 'pending')) { %>
 <form method="post" action="/order/<%= o.order_no %>/pay" class="panel center">
   <input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="t" value="<%= o.tracking_token %>">
+  <% if (o.payment_method === 'momo') { %>
+  <% if (momo && momo.failure_reason) { %><p class="alert alert-error"><%= momo.failure_reason %></p><% } %>
+  <p>Your order is saved but not yet paid. We will send a payment request to your MTN Mobile Money number.</p>
+  <label class="field-inline">MoMo number <input name="momoPhone" type="tel" value="<%= (momo && momo.payer_phone) || o.customer_phone %>" required></label>
+  <% } else { %>
   <p>Your order is saved but not yet paid. Mobile Money approvals can take a minute – if you already approved the payment, wait a moment, then press the button to check.</p>
+  <% } %>
   <button class="btn btn-gold" type="submit">Pay now <%= ghs(o.total) %></button>
 </form>
 <% } %>

@@ -41,6 +41,10 @@
       <% payOptions.forEach((o, i) => { %>
         <label class="pay-opt"><input type="radio" name="paymentMethod" value="<%= o.value %>" <%= draft.paymentMethod === o.value || (!draft.paymentMethod && i === 0) ? 'checked' : '' %>> <strong><%= o.label %></strong><small><%= o.hint %></small></label>
       <% }) %>
+      <div class="momo-field" data-momo-field>
+        <%- f.input('momoPhone', 'MoMo number to pay from', draft.momoPhone || draft.phone, {type:'tel', placeholder:'024 123 4567', autocomplete:'tel'}) %>
+        <p class="small">MTN Mobile Money. We send a request to this number; you approve it with your PIN. Leave as it is to use your contact number.</p>
+      </div>
       <%- f.check('marketingConsent', 'Yes, send me news and offers by email/SMS/WhatsApp. (Optional – you can stop any time.)', draft.marketingConsent, {value:'1'}) %>
     </fieldset>
     <button class="btn btn-gold btn-block" type="submit">Review my order</button>

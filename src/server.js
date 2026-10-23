@@ -13,7 +13,8 @@ const app = createApp(db);
 
 const server = app.listen(config.port, () => {
   console.log(`ScentAura is running at ${config.baseUrl}  (port ${config.port})`);
-  if (!config.paystackEnabled()) console.log('Note: PAYSTACK_SECRET_KEY is not set, so online payment is switched off.');
+  if (!config.momoEnabled() && !config.paystackEnabled()) console.log('Note: no online payment keys are set (MOMO_* or PAYSTACK_SECRET_KEY), so only pay-on-delivery is available.');
+  if (config.momoEnabled() && config.momo.env === 'sandbox') console.log('Mobile Money is in SANDBOX mode (test numbers only, no real money).');
   if (!config.isProd && !config.sessionSecret) console.log('Note: using a built-in development session secret. Set SESSION_SECRET before going live.');
   const users = db.prepare('SELECT COUNT(*) c FROM users').get().c;
   if (!users) console.log('No staff account yet. Create the owner with:  npm run create-admin');

@@ -1,0 +1,4 @@
+Put these four values in .env: MOMO_ENV, MOMO_SUBSCRIPTION_KEY, MOMO_API_USER and MOMO_API_KEY.
+Run npm run momo:check to confirm MTN accepts them.
+For free testing first, use MOMO_ENV=sandbox and run npm run momo:setup-sandbox. It creates your test user and key for you.
+For live, set MOMO_ENV=mtnghana, use the live keys MTN gives you, and set BASE_URL to your real https address.

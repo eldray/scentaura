@@ -10,6 +10,7 @@ const settings = require('./lib/settings');
 const util = require('./lib/util');
 const infra = require('./lib/infra');
 const payments = require('./services/payments');
+const momo = require('./services/momo');
 
 function createApp(db = dbm.get()) {
   const app = express();
@@ -28,6 +29,17 @@ function createApp(db = dbm.get()) {
     } catch (e) {
       console.error('webhook error', e);
       res.status(500).send('error');     // Paystack will retry
+    }
+  });
+
+  /* ----- MTN MoMo callback: unsigned, so it only triggers a fresh status check with MTN ----- */
+  app.all('/webhooks/momo/:reference', express.raw({ type: '*/*', limit: '50kb' }), async (req, res) => {
+    try {
+      const out = await momo.handleCallback(db, req.params.reference);
+      res.status(out.status).send(out.body);
+    } catch (e) {
+      console.error('momo callback error', e.message);
+      res.status(500).send('error');
     }
   });
 
@@ -78,6 +90,7 @@ function createApp(db = dbm.get()) {
     Object.assign(res.locals, {
       S: s, f: require('./lib/forms'), ghs: v => util.ghs(v, s.currency_symbol || 'GHS'), fromPesewas: util.fromPesewas, paragraphs: util.paragraphs,
       ORDER_STATUSES: util.ORDER_STATUSES, GH_REGIONS: util.GH_REGIONS,
+      wishIds: new Set(req.customer ? db.prepare('SELECT product_id FROM wishlists WHERE customer_id = ?').all(req.customer.id).map(r => r.product_id) : []),
       customer: req.customer, cartCount: cart.reduce((n, i) => n + (i.qty || 0), 0), flash: req.session.flash || null,
       baseUrl: config.baseUrl, currentPath: req.path, query: req.query,
       title: '', description: '', canonical: null, ogImage: null, jsonld: null, noindex: false, isAdmin: false,

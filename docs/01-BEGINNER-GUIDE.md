@@ -7,7 +7,7 @@ Written for someone with little technical experience. Take it one section at a t
 
 * The shop is one program. It stores everything (products, orders, customers) in **one database file** and the product photos in an **uploads folder**. Both live in a "data" place on your server. **If you lose that place without a backup, you lose the shop** – so section 14 (backups) matters.
 * You manage the shop from the **dashboard** at `your-website/admin`. You never edit code to add products or change prices.
-* Customers pay through **Paystack**. Paystack, not you, handles card numbers and Mobile Money PINs. Your shop never sees them.
+* Customers pay with **MTN Mobile Money** (they approve a request on their phone) – or card through Paystack if you add it. The shop never sees PINs or card numbers.
 
 ---
 ## 1. What you need (accounts and software)
@@ -25,7 +25,7 @@ Written for someone with little technical experience. Take it one section at a t
 ---
 ## 2. Install on your computer
 
-1. Install Node.js (accept all defaults). Restart your computer if asked.
+1. Install Node.js **22 (LTS) or newer** (24 also works) from https://nodejs.org – accept all defaults and restart your computer if asked. Nothing else is needed: the database is built into Node, so there is no Python or compiler to install.
 2. Unzip the project. Open the folder, then open a terminal in it:
    * Windows: click the folder's address bar, type `cmd`, press Enter.
    * Mac: right-click the folder → "New Terminal at Folder".
@@ -77,12 +77,21 @@ Want to see it with sample products first? `npm run seed:demo` adds five **DEMO*
 1. Fill in the name, brand, category, who it is for, concentration (Eau de Parfum etc.) and notes. **Only write facts you can verify.** Leave "Longevity", "Projection" and "Sourcing" empty if you are not sure – the shop simply will not show them.
 2. Save. You land on the edit page.
 3. **Sizes, prices & stock:** add each bottle size (30, 50, 100 ml…). Every size has its own price, optional discount price, cost (what you paid), low-stock alert level and starting stock. Prices are in cedis, like `450.00`.
-4. **Photos:** upload several angles (JPEG, PNG or WebP up to 5 MB). The first is the main photo. Add a short description for each (helps blind visitors and Google).
+4. **Photos:** you can add them right on the *Add product* page or later on the edit page. Either choose files from your computer, or paste web addresses (one per line, starting `https://` and ending at the image itself, such as `…/photo.jpg`). JPEG, PNG or WebP up to 5 MB. The shop saves its own resized copy, so photos keep working even if the original website changes. The first photo is the main one. Add a short description for each (helps blind visitors and Google). **Only use photos you own or have permission to use.**
 5. Set Status to **Active**. Draft products are invisible to customers.
 
 Tips: "Duplicate as draft" copies a product's details for similar items. "Archive" hides a product but keeps its history. Products that have orders cannot be deleted, only archived.
 
 Changing stock later: **Admin → Inventory**. Every change needs a reason and is recorded with your name. To receive goods from a supplier use **Suppliers & purchases** so your cost is updated too.
+
+---
+### Replacing the sample pictures on the home page
+
+The home page ships with sample pictures so it looks finished on day one. Replace them in **Admin → Settings**: upload your **logo**, your **home banner**, and a picture for each of the five **category tiles** (Women, Men, Unisex, New arrivals, Best sellers – portrait photos work best). "Use sample picture" puts the sample back. Products without photos show a "Photo coming soon" bottle until you upload real ones.
+
+### Where staff sign in
+
+Staff use **/admin/login** (for example `https://your-shop.com/admin/login`). The "Sign in" icon in the shop header is for **customers** and will say "account not found" for staff accounts.
 
 ---
 ## 8. Delivery charges
@@ -94,7 +103,11 @@ For each zone add one or more options: Standard, Express, Courier, Customer pick
 Customers must pick an option at checkout, so add at least one before launch.
 
 ---
-## 9. Connect Paystack
+## 9. Connect Mobile Money (MTN MoMo)
+
+Follow **`docs/05-MOMO-SETUP.md`** – it covers free sandbox testing and going live. When you receive your MTN keys you only paste three values into `.env`.
+
+## 9b. (Optional) Connect Paystack for cards
 
 1. Sign in at dashboard.paystack.com → **Settings → API Keys & Webhooks**.
 2. Copy the **Test Secret Key** (starts `sk_test_`) into `.env` as `PAYSTACK_SECRET_KEY=` and the Public key as `PAYSTACK_PUBLIC_KEY=`.
@@ -202,10 +215,13 @@ Any reputable domain seller (for example Namecheap, GoDaddy, or a Ghana-based re
 
 | Problem | What to do |
 |---|---|
+| `npm install` fails on Windows with "node-gyp" or "Python" errors | You are on an old copy of the project that used a different database package. Use this version (it needs no compiler) and Node 22 or newer. Delete the `node_modules` folder and run `npm install` again. |
+| `npm run create-admin` seems to hang in Git Bash | It is waiting for you to type. Git Bash cannot hide the password; use PowerShell or run `winpty npm run create-admin`. |
+| Referral links show `localhost` | Set `BASE_URL=https://your-real-domain` in `.env` on the live server and restart. |
 | "npm is not recognised" | Node.js is not installed or the terminal was open before installing. Install Node, close and reopen the terminal. |
 | Port already in use | Another program uses port 3000. Change `PORT=` in `.env` (and `BASE_URL`). |
 | I cannot sign in to the dashboard | Run `npm run create-admin` again – it adds another owner. Or use "Forgot password" (needs email set up). Too many wrong tries locks you out for a while; wait 15 minutes. |
-| Customer says they paid but the order shows unpaid | Open the order → **Check payment with Paystack**. If Paystack says success, it is marked paid. Check your webhook URL in Paystack. |
+| Customer says they paid but the order shows unpaid | Open the order → **Check payment with MTN** (or Paystack). If Paystack says success, it is marked paid. Check your webhook URL in Paystack. |
 | Order says "Paid after the item sold out" | Someone paid after their reservation expired and the stock was sold. Contact them or refund from the order page. |
 | No emails arrive | Email is not set up (see the Email outbox). Fill in the SMTP lines in `.env` and restart. Check spam folders. |
 | Photos do not show after a restart | The uploads folder was not on a persistent disk. Restore from backup and mount a volume. |

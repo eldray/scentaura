@@ -62,7 +62,7 @@ function categoryRevenue(db, from, to) {
 function paymentBreakdown(db, from, to) {
   const r = range(from, to);
   return db.prepare(`${PAID_CTE}
-    SELECT CASE WHEN paid.payment_method = 'cod' THEN 'Cash on delivery / pickup' ELSE 'Online (Paystack)' END AS method,
+    SELECT CASE WHEN paid.payment_method = 'cod' THEN 'Cash on delivery / pickup' ELSE 'Online (Mobile Money / card)' END AS method,
       COUNT(*) AS orders, SUM(total) AS amount
     FROM paid WHERE paid_at BETWEEN ? AND ? GROUP BY 1`).all(r.fromTs, r.toTs);
 }
@@ -78,7 +78,7 @@ function profit(db, from, to) {
       COALESCE(SUM(CASE WHEN i.unit_cost = 0 THEN 1 ELSE 0 END),0) AS no_cost_lines
     FROM order_items i JOIN paid ON paid.id = i.order_id WHERE paid.paid_at BETWEEN ? AND ?`).get(r.fromTs, r.toTs);
   const refunds = db.prepare("SELECT COALESCE(SUM(amount),0) s FROM refunds WHERE status = 'processed' AND created_at BETWEEN ? AND ?").get(r.fromTs, r.toTs).s;
-  const fees = db.prepare("SELECT COALESCE(SUM(fee),0) s FROM payments WHERE provider = 'paystack' AND status IN ('success','partially_refunded','refunded') AND paid_at BETWEEN ? AND ?").get(r.fromTs, r.toTs).s;
+  const fees = db.prepare("SELECT COALESCE(SUM(fee),0) s FROM payments WHERE provider != 'cod' AND status IN ('success','partially_refunded','refunded') AND paid_at BETWEEN ? AND ?").get(r.fromTs, r.toTs).s;
   const expenses = db.prepare('SELECT category, SUM(amount) AS amount FROM expenses WHERE spent_on BETWEEN ? AND ? GROUP BY category ORDER BY amount DESC').all(r.from, r.to);
   const opex = expenses.reduce((a, e) => a + e.amount, 0);
   const deliveryCosts = expenses.filter(e => e.category === 'Delivery costs').reduce((a, e) => a + e.amount, 0);
@@ -101,7 +101,7 @@ function profit(db, from, to) {
 function cashView(db, from, to) {
   const r = range(from, to);
   const collected = db.prepare("SELECT COALESCE(SUM(amount),0) s FROM payments WHERE status IN ('success','partially_refunded','refunded') AND paid_at BETWEEN ? AND ?").get(r.fromTs, r.toTs).s;
-  const fees = db.prepare("SELECT COALESCE(SUM(fee),0) s FROM payments WHERE provider = 'paystack' AND status IN ('success','partially_refunded','refunded') AND paid_at BETWEEN ? AND ?").get(r.fromTs, r.toTs).s;
+  const fees = db.prepare("SELECT COALESCE(SUM(fee),0) s FROM payments WHERE provider != 'cod' AND status IN ('success','partially_refunded','refunded') AND paid_at BETWEEN ? AND ?").get(r.fromTs, r.toTs).s;
   const refunds = db.prepare("SELECT COALESCE(SUM(amount),0) s FROM refunds WHERE status = 'processed' AND created_at BETWEEN ? AND ?").get(r.fromTs, r.toTs).s;
   const expenses = db.prepare('SELECT COALESCE(SUM(amount),0) s FROM expenses WHERE spent_on BETWEEN ? AND ?').get(r.from, r.to).s;
   const supplier = db.prepare('SELECT COALESCE(SUM(amount),0) s FROM supplier_payments WHERE paid_on BETWEEN ? AND ?').get(r.from, r.to).s;
@@ -119,7 +119,7 @@ function reconciliation(db, from, to) {
     const issues = [];
     if (x.status === 'success' && x.amount !== x.order_total) issues.push('Amount differs from order total');
     if (x.status === 'success' && !['paid', 'partially_refunded', 'refunded'].includes(x.order_payment_status)) issues.push('Payment succeeded but order is not marked paid');
-    if (x.status !== 'success' && x.order_payment_status === 'paid' && x.provider === 'paystack') issues.push('Order marked paid without a successful payment');
+    if (x.status !== 'success' && x.order_payment_status === 'paid' && x.provider !== 'cod') issues.push('Order marked paid without a successful payment');
     x.issues = issues;
   }
   const orphan = db.prepare(`SELECT o.order_no, o.total FROM orders o WHERE o.payment_status = 'paid' AND NOT EXISTS (SELECT 1 FROM payments p WHERE p.order_id = o.id AND p.status IN ('success','partially_refunded','refunded'))`).all();

@@ -62,9 +62,32 @@ function open(file) {
   return conn;
 }
 
+/** Bring a database created by an older version up to date (safe to run every start). */
+function upgrade(conn) {
+  const cols = conn.prepare("PRAGMA table_info(payments)").all().map(c => c.name);
+  if (!cols.includes('payer_phone')) conn.exec('ALTER TABLE payments ADD COLUMN payer_phone TEXT');
+  if (!cols.includes('failure_reason')) conn.exec('ALTER TABLE payments ADD COLUMN failure_reason TEXT');
+  // Older databases only allowed Paystack/cash. Widen the allowed values in place (no data is rewritten).
+  const fixes = [
+    ['orders', "payment_method IN ('paystack','cod')", "payment_method IN ('paystack','momo','cod')"],
+    ['refunds', "method IN ('paystack','manual')", "method IN ('paystack','momo','manual')"]
+  ];
+  for (const [table, from, to] of fixes) {
+    const row = conn.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name = ?").get(table);
+    if (row && row.sql.includes(from)) {
+      const ver = conn.prepare('PRAGMA schema_version').get().schema_version;
+      conn.exec('PRAGMA writable_schema = ON');
+      conn.prepare("UPDATE sqlite_master SET sql = replace(sql, ?, ?) WHERE type='table' AND name = ?").run(from, to, table);
+      conn.exec(`PRAGMA schema_version = ${ver + 1}`);
+      conn.exec('PRAGMA writable_schema = OFF');
+    }
+  }
+}
+
 function migrate(conn) {
   const sql = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
   conn.exec(sql);
+  upgrade(conn);
   require('./lib/defaults').seedDefaults(conn);
   return conn;
 }

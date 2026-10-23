@@ -1,8 +1,10 @@
 <h1>Settings</h1><p><a href="/admin/settings/audit">Activity log</a> · <a href="/admin/settings/outbox">Email outbox</a></p>
 <div class="box"><h2>System status</h2><ul>
+<li><%= system.momo ? '✅' : '⬜' %> MTN Mobile Money <%= system.momo ? (system.momoEnv === 'sandbox' ? 'is connected in SANDBOX mode (no real money)' : 'is connected in LIVE mode') : 'is not connected. Fill in the MOMO_* values on the server.' %></li>
 <li><%= system.paystack ? '✅' : '⬜' %> Paystack <%= system.paystack ? (system.paystackTest ? 'is connected in TEST mode (no real money)' : 'is connected in LIVE mode') : 'is not connected. Set PAYSTACK_SECRET_KEY on the server.' %></li>
 <li><%= system.smtp ? '✅' : '⬜' %> Email sending <%= system.smtp ? 'is set up' : 'is not set up (emails are only listed in the outbox). Set the SMTP_ values on the server.' %></li>
 <li><%= /^https:/.test(system.baseUrl) ? '✅' : '⬜' %> Shop address: <%= system.baseUrl %><%= /^https:/.test(system.baseUrl) ? '' : ' (should start with https:// when live)' %></li></ul>
+<p class="small">MTN MoMo needs no webhook setup: the shop sends its own callback address with each request and always double-checks with MTN.</p>
 <p class="small">Webhook address to enter in Paystack (Settings → API Keys &amp; Webhooks): <code><%= system.baseUrl %>/webhooks/paystack</code></p></div>
 <form method="post" action="/admin/settings" class="box"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><h2>Business details</h2>
 <div class="grid-2"><div><%- f.input('business_name','Business name',S.business_name,{required:true}) %><%- f.input('tagline','Tagline',S.tagline) %><%- f.input('contact_email','Contact email',S.contact_email,{type:'email'}) %><%- f.input('contact_phone','Contact phone',S.contact_phone) %>

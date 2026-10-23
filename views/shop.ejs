@@ -4,7 +4,20 @@
   <% if (intro) { %><p class="lead"><%= intro %></p><% } %>
 </section>
 <% const pills = [['/shop','All'],['/women','Women'],['/men','Men'],['/unisex','Unisex'],['/new-arrivals','New'],['/best-sellers','Best sellers'],['/offers','Offers']]; %>
+<div class="shop-bar" data-shop-bar>
 <% if (typeof isSearch === 'undefined') { %><nav class="pills" aria-label="Browse by category"><% pills.forEach(p => { %><a href="<%= p[0] %>"<%- pathName === p[0] ? ' aria-current="page"' : '' %>><%= p[1] %></a><% }) %></nav><% } %>
+  <div class="toolbar">
+    <p class="count"><strong><%= result.total %></strong> product<%= result.total === 1 ? '' : 's' %></p>
+    <form method="get" action="<%= pathName %>" class="sort">
+      <% Object.keys(f).filter(k => !['sort','page'].includes(k)).forEach(k => { [].concat(f[k]).forEach(v => { %><input type="hidden" name="<%= k %>" value="<%= v %>"><% }) }) %>
+      <label for="sort">Sort by</label>
+      <select id="sort" name="sort" data-autosubmit>
+        <% [['featured','Featured'],['newest','Newest'],['popular','Most popular'],['rating','Best rated'],['price_asc','Price: low to high'],['price_desc','Price: high to low']].forEach(o => { %><option value="<%= o[0] %>" <%= result.sort === o[0] ? 'selected' : '' %>><%= o[1] %></option><% }) %>
+      </select>
+      <noscript><button class="btn" type="submit">Sort</button></noscript>
+    </form>
+  </div>
+</div>
 
 <div class="shop-layout">
   <form class="filters" method="get" action="<%= pathName %>">
@@ -31,17 +44,6 @@
   </form>
 
   <div>
-    <div class="toolbar">
-      <p class="count"><strong><%= result.total %></strong> product<%= result.total === 1 ? '' : 's' %></p>
-      <form method="get" action="<%= pathName %>" class="sort">
-        <% Object.keys(f).filter(k => !['sort','page'].includes(k)).forEach(k => { [].concat(f[k]).forEach(v => { %><input type="hidden" name="<%= k %>" value="<%= v %>"><% }) }) %>
-        <label for="sort">Sort by</label>
-        <select id="sort" name="sort" data-autosubmit>
-          <% [['featured','Featured'],['newest','Newest'],['popular','Most popular'],['rating','Best rated'],['price_asc','Price: low to high'],['price_desc','Price: high to low']].forEach(o => { %><option value="<%= o[0] %>" <%= result.sort === o[0] ? 'selected' : '' %>><%= o[1] %></option><% }) %>
-        </select>
-        <noscript><button class="btn" type="submit">Sort</button></noscript>
-      </form>
-    </div>
     <% if (result.products.length) { %>
       <div class="grid"><% result.products.forEach(p => { %><%- include('partials/product-card', { p }) %><% }) %></div>
       <%- include('partials/pagination', { result, pathName, query }) %>

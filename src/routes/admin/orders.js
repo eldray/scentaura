@@ -2,6 +2,7 @@
 const express = require('express');
 const orders = require('../../services/orders');
 const payments = require('../../services/payments');
+const momo = require('../../services/momo');
 const notify = require('../../services/notify');
 const util = require('../../lib/util');
 const infra = require('../../lib/infra');
@@ -119,11 +120,12 @@ router.post('/:id/collect-cod', (req, res) => {
 
 router.post('/:id/check-payment', async (req, res) => {
   const d = db(req), id = util.int(req.params.id);
-  const p = d.prepare("SELECT reference FROM payments WHERE order_id = ? AND provider = 'paystack' AND status = 'pending' ORDER BY id DESC LIMIT 1").get(id);
+  const p = d.prepare("SELECT reference, provider FROM payments WHERE order_id = ? AND provider IN ('paystack','momo') AND status IN ('pending','abandoned') ORDER BY id DESC LIMIT 1").get(id);
   if (!p) res.flash('info', 'There is no pending online payment to check.');
   else {
-    const r = await payments.verifyReference(d, p.reference);
-    res.flash(r.status === 'success' ? 'success' : 'info', r.status === 'success' ? 'Paystack confirms the payment. Order marked as paid.' : `Paystack says: ${r.status}.`);
+    const name = p.provider === 'momo' ? 'MTN MoMo' : 'Paystack';
+    const r = p.provider === 'momo' ? await momo.verifyReference(d, p.reference) : await payments.verifyReference(d, p.reference);
+    res.flash(r.status === 'success' ? 'success' : 'info', r.status === 'success' ? `${name} confirms the payment. Order marked as paid.` : `${name} says: ${r.status}.`);
   }
   back(res, id);
 });
@@ -134,7 +136,7 @@ router.post('/:id/refund', async (req, res) => {
   const amount = util.toPesewas(req.body.amount);
   try {
     if (amount === null) throw new orders.OrderError('Enter the refund amount, for example 150.00.');
-    const r = await payments.refundOrder(d, id, amount, util.clean(req.body.reason, 300), req.staff.id, req.body.method === 'manual' ? 'manual' : 'paystack');
+    const r = await payments.refundOrder(d, id, amount, util.clean(req.body.reason, 300), req.staff.id, req.body.method === 'manual' ? 'manual' : 'paystack');   // Mobile Money payments are always refunded by hand
     infra.audit(req, 'refund', 'order', id, `${amount} (${r.method}, ${r.status})`);
     res.flash('success', r.status === 'processed' ? 'Refund recorded.' : 'Refund sent to Paystack. It is pending until Paystack confirms it.');
   } catch (e) { if (e instanceof orders.OrderError) res.flash('error', e.message); else throw e; }

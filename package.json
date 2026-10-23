@@ -10,6 +10,8 @@
     "create-admin": "node --disable-warning=ExperimentalWarning src/scripts/create-admin.js",
     "seed:demo": "node --disable-warning=ExperimentalWarning src/scripts/seed-demo.js",
     "clear:demo": "node --disable-warning=ExperimentalWarning src/scripts/seed-demo.js --clear",
+    "momo:setup-sandbox": "node --disable-warning=ExperimentalWarning src/scripts/momo-sandbox-setup.js",
+    "momo:check": "node --disable-warning=ExperimentalWarning src/scripts/momo-check.js",
     "backup": "node --disable-warning=ExperimentalWarning src/scripts/backup.js",
     "test": "node --test tests/*.test.js"
   },

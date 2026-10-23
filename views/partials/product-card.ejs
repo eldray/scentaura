@@ -1,4 +1,9 @@
 <article class="card">
+  <form method="post" action="/wishlist/toggle" class="wish-form" data-wish<%- customer ? '' : ' data-guest' %>>
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="productId" value="<%= p.id %>"><input type="hidden" name="back" value="<%= currentPath || '/shop' %>">
+    <% const saved = typeof wishIds !== 'undefined' && wishIds && wishIds.has(p.id); %>
+    <button type="submit" class="wish-btn<%= saved ? ' is-saved' : '' %>" aria-pressed="<%= saved ? 'true' : 'false' %>" aria-label="<%= saved ? 'Remove ' + p.name + ' from wishlist' : 'Save ' + p.name + ' to wishlist' %>" title="<%= saved ? 'Saved to wishlist' : 'Save to wishlist' %>"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.500-4.700-7.500-10.500a4.300 4.300 0 0 1 7.500-2.800A4.300 4.300 0 0 1 19.500 10c0 5.800-7.500 10.500-7.500 10.500z"/></svg></button>
+  </form>
   <a class="card-img" href="/product/<%= p.slug %>" tabindex="-1" aria-hidden="true">
     <img src="<%= p.thumb || '/public/img/placeholder.svg' %>" alt="" loading="lazy" width="400" height="400">
     <% if (p.sale_variants > 0) { %><span class="tag tag-sale">Offer</span><% } else if (p.is_new) { %><span class="tag">New</span><% } else if (p.is_bestseller) { %><span class="tag">Best seller</span><% } %>

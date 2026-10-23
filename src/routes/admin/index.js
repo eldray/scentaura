@@ -153,7 +153,7 @@ router.get('/', requirePerm('dashboard'), (req, res) => {
     ['Add your business details (phone, email, WhatsApp)', !!(S.contact_phone && S.contact_email), '/admin/settings'],
     ['Set up delivery fees', d.prepare('SELECT COUNT(*) c FROM delivery_rates WHERE active = 1').get().c > 0, '/admin/deliveries'],
     ['Add at least one product', d.prepare("SELECT COUNT(*) c FROM products WHERE status = 'active'").get().c > 0, '/admin/products'],
-    ['Connect Paystack (PAYSTACK_SECRET_KEY)', config.paystackEnabled(), '/admin/settings'],
+    ['Connect Mobile Money (MOMO_* keys) or Paystack', config.momoEnabled() || config.paystackEnabled(), '/admin/settings'],
     ['Review and approve your policy pages', d.prepare('SELECT COUNT(*) c FROM pages WHERE approved = 0').get().c === 0, '/admin/content/pages'],
     ['Set up email sending (SMTP)', !!config.smtp.host, '/admin/settings']
   ];

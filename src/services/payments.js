@@ -274,7 +274,7 @@ async function refundOrder(db, orderId, amount, reason, userId, method) {
     }
   }
   finaliseRefundTotals(db, orderId);
-  orders.addEvent(db, orderId, { kind: 'payment', note: `Refund of ${(amount / 100).toFixed(2)} recorded${viaPaystack ? ' via Paystack' : ' (manual)'}. ${reason || ''}`.trim(), userId });
+  orders.addEvent(db, orderId, { kind: 'payment', note: `Refund of ${(amount / 100).toFixed(2)} recorded${viaPaystack ? ' via Paystack' : ' (manual – paid back by you)'}. ${reason || ''}`.trim(), userId });
   return db.prepare('SELECT * FROM refunds WHERE id = ?').get(refundId);
 }
 

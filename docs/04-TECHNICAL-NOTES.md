@@ -18,7 +18,8 @@ You asked for a custom build but also for a recommendation if a ready-made platf
 
 * **Node.js 22 + Express 5**, server-rendered pages (EJS). No separate frontend build, no extra services. The storefront works without JavaScript.
 * **SQLite** (single file, WAL mode, foreign keys on) via Node's built-in `node:sqlite` (no native compile step; needs Node 22.13+ or 24), all money as **integer pesewas**.
-* **Paystack** over its REST API (initialise, verify, refund) plus signed webhooks.
+* **MTN MoMo Collection API** (`src/services/momo.js`): OAuth token (cached ~1h), `POST /collection/v1_0/requesttopay` with a UUID `X-Reference-Id`, status via `GET …/requesttopay/{id}`; unsigned callback only triggers a re-check. MTN-only; refunds manual. Config `MOMO_*`; `npm run momo:check`.
+* **Paystack** (optional) over its REST API (initialise, verify, refund) plus signed webhooks.
 * **sharp** for safe image processing, **bcryptjs** for passwords, **helmet** for security headers, **express-rate-limit**, **nodemailer** for email.
 
 **Deviation from the prompt's suggested stack (React + TypeScript + PostgreSQL + Prisma):** I chose server-rendered pages and SQLite deliberately. For a single small shop it means one process, no database server to buy or secure, one file to back up, fast pages on cheap hosting, and far less for a beginner to break. The trade-offs: SQLite means **one server only** (you cannot run several copies behind a load balancer) and a persistent disk is required. If the business outgrows that, the data layer is isolated in `src/services/*` and `src/db.js`; moving to PostgreSQL is a contained piece of work, not a rewrite, but it is work.
@@ -60,14 +61,18 @@ Implemented and automatically tested: catalogue with variants and filters/sortin
 * **Product barcodes** are stored but there is no scanner workflow.
 * **Multi-currency / other countries** – GHS only; structure allows later work.
 * **Automated database restore tooling** – documented manual procedure.
-* **Real Paystack calls were not exercised in development** (no keys / the build environment cannot reach Paystack). Request shapes follow Paystack's documentation and are covered by tests against a simulated Paystack. **Do a full test-mode order before going live.**
+* **Real MTN MoMo and Paystack calls were not exercised in development** (no keys / the build environment cannot reach Paystack). Request shapes follow Paystack's documentation and are covered by tests against a simulated Paystack. **Do a full test-mode order before going live.**
 * Email sending was verified only as far as queuing/logging; test with your real SMTP account.
 
-## 7. Tests (`npm test` – 45 tests)
+## 7. Tests (`npm test` – 47 tests)
 
 Pricing and phone validation; coupon rules; stock reservation, no-oversell, no-negative stock, rollback on failure, expiry/release, manual-adjust rules, weighted-average cost; COD flow; Paystack signature, duplicate webhook, amount/currency mismatch, retry, late payment, refunds (partial/full/failed), cancellation/return stock handling; profit report arithmetic; HTTP-level: all public pages, a complete guest checkout → webhook → paid journey, CSRF, customer registration/login, admin login, **role permissions for GET and POST**, image upload (valid and malicious), admin order handling, security headers.
 
-Mobile responsiveness was checked visually in a headless browser at phone and desktop widths; run your own checks on real devices.
+Mobile responsiveness was checked in a headless browser at phone (390px) and desktop (1280px) widths across every storefront and admin page (no horizontal overflow, no console or CSP errors), and a full buyer-to-delivered admin journey plus product-photo upload was driven end to end in the browser. Run your own checks on real devices.
+
+**Images from the web:** product photos can be fetched from `https://` addresses. The downloader refuses non-https, non-443 ports, credentials in the address and any host that resolves to a private/internal address (checked at connection time, including after redirects), limits size to 5 MB and time to 10 s, and re-encodes the result with sharp. The sample home-page photos are hot-linked from Unsplash (free licence) and fall back to local artwork if they cannot load; replace them with your own in Settings.
+
+**Database driver:** Node's built-in `node:sqlite` (Node 22.13+). It is marked experimental by Node; the app wraps it in `src/db.js`, which is the only file that touches the driver.
 
 ## 8. Database
 

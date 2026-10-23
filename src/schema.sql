@@ -264,7 +264,7 @@ CREATE TABLE IF NOT EXISTS orders (
   coupon_id INTEGER REFERENCES coupons(id) ON DELETE SET NULL,
   coupon_code TEXT,
   referrer_customer_id INTEGER REFERENCES customers(id) ON DELETE SET NULL,
-  payment_method TEXT NOT NULL CHECK (payment_method IN ('paystack','cod')),
+  payment_method TEXT NOT NULL CHECK (payment_method IN ('paystack','momo','cod')),
   payment_status TEXT NOT NULL DEFAULT 'unpaid' CHECK (payment_status IN ('unpaid','pending','paid','failed','cancelled','partially_refunded','refunded')),
   status TEXT NOT NULL DEFAULT 'pending_confirmation' CHECK (status IN ('pending_confirmation','payment_pending','paid','processing','packed','dispatched','out_for_delivery','delivered','cancelled','return_requested','returned','refunded')),
   stock_state TEXT NOT NULL DEFAULT 'none' CHECK (stock_state IN ('none','reserved','deducted','released','restored')),
@@ -318,7 +318,7 @@ CREATE INDEX IF NOT EXISTS idx_events_order ON order_events(order_id);
 CREATE TABLE IF NOT EXISTS payments (
   id INTEGER PRIMARY KEY,
   order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
-  provider TEXT NOT NULL,                -- paystack | cod
+  provider TEXT NOT NULL,                -- momo | paystack | cod
   reference TEXT NOT NULL UNIQUE,
   amount INTEGER NOT NULL,
   currency TEXT NOT NULL DEFAULT 'GHS',
@@ -327,6 +327,8 @@ CREATE TABLE IF NOT EXISTS payments (
   fee INTEGER NOT NULL DEFAULT 0,
   provider_txn_id TEXT,
   authorization_url TEXT,
+  payer_phone TEXT,
+  failure_reason TEXT,
   paid_at TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -351,7 +353,7 @@ CREATE TABLE IF NOT EXISTS refunds (
   payment_id INTEGER REFERENCES payments(id) ON DELETE SET NULL,
   amount INTEGER NOT NULL CHECK (amount > 0),
   reason TEXT,
-  method TEXT NOT NULL DEFAULT 'paystack' CHECK (method IN ('paystack','manual')),
+  method TEXT NOT NULL DEFAULT 'paystack' CHECK (method IN ('paystack','momo','manual')),
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','processed','failed')),
   provider_ref TEXT,
   user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,

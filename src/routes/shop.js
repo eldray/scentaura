@@ -120,12 +120,19 @@ router.get('/wishlist', requireCustomer, (req, res) => {
   res.page('wishlist', { title: 'My wishlist', products, noindex: true });
 });
 
-router.post('/wishlist/toggle', requireCustomer, (req, res) => {
+router.post('/wishlist/toggle', (req, res, next) => {
+  if (req.customer) return next();
+  const back = typeof req.body.back === 'string' && req.body.back.startsWith('/') && !req.body.back.startsWith('//') ? req.body.back : '/shop';
+  res.flash('info', 'Please sign in to save items to your wishlist.');
+  req.session.returnTo = back;
+  res.redirect('/login');
+}, (req, res) => {
   const d = db(req);
   const id = util.int(req.body.productId);
   const exists = d.prepare('SELECT 1 FROM wishlists WHERE customer_id = ? AND product_id = ?').get(req.customer.id, id);
   if (exists) d.prepare('DELETE FROM wishlists WHERE customer_id = ? AND product_id = ?').run(req.customer.id, id);
   else if (d.prepare('SELECT 1 FROM products WHERE id = ?').get(id)) d.prepare('INSERT OR IGNORE INTO wishlists (customer_id, product_id) VALUES (?,?)').run(req.customer.id, id);
+  if ((req.get('accept') || '').includes('application/json')) return res.json({ saved: !exists });
   const back = typeof req.body.back === 'string' && req.body.back.startsWith('/') && !req.body.back.startsWith('//') ? req.body.back : '/wishlist';
   res.redirect(back);
 });

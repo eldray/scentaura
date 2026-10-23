@@ -19,6 +19,15 @@ const config = {
     publicKey: process.env.PAYSTACK_PUBLIC_KEY || '',
     baseUrl: 'https://api.paystack.co'
   },
+  // MTN Mobile Money "Collection" API (https://momodeveloper.mtn.com). Fill these in .env when MTN gives you your keys.
+  momo: {
+    env: process.env.MOMO_ENV || 'sandbox',            // sandbox while testing, mtnghana when live
+    baseUrl: (process.env.MOMO_BASE_URL || ((process.env.MOMO_ENV || 'sandbox') === 'sandbox' ? 'https://sandbox.momodeveloper.mtn.com' : 'https://proxy.momoapi.mtn.com')).replace(/\/$/, ''),
+    subscriptionKey: process.env.MOMO_SUBSCRIPTION_KEY || '',
+    apiUser: process.env.MOMO_API_USER || '',
+    apiKey: process.env.MOMO_API_KEY || '',
+    currency: process.env.MOMO_CURRENCY || ((process.env.MOMO_ENV || 'sandbox') === 'sandbox' ? 'EUR' : 'GHS')   // MTN's sandbox only accepts EUR
+  },
   smtp: {
     host: process.env.SMTP_HOST || '',
     port: parseInt(process.env.SMTP_PORT || '587', 10),
@@ -28,7 +37,8 @@ const config = {
   }
 };
 
-config.paystackEnabled = () => !!config.paystack.secretKey;
+config.momoEnabled = () => !!(config.momo.subscriptionKey && config.momo.apiUser && config.momo.apiKey);
+config.paystackEnabled = () => !!config.paystack.secretKey && !/replace_me/i.test(config.paystack.secretKey);   // the sample value in .env.example does not count
 
 config.assertProduction = function () {
   const problems = [];
