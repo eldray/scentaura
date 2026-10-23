@@ -7,6 +7,12 @@ if (config.isProd) config.assertProduction();
 fs.mkdirSync(config.uploadDir, { recursive: true });
 
 const db = dbm.get();
+
+// Hosts without a shell (e.g. Render free plan): set SEED_DEMO=1 to add demo products once, on an empty shop.
+if (process.env.SEED_DEMO === '1' && db.prepare('SELECT COUNT(*) c FROM products').get().c === 0) {
+  require('./scripts/seed-demo').seed(db);
+  console.log('SEED_DEMO: demo products added. Remove SEED_DEMO from your settings, and clear the demo data before launch.');
+}
 const { createApp } = require('./app');
 const orders = require('./services/orders');
 const app = createApp(db);
